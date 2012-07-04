@@ -15,16 +15,16 @@ class LevelCamera(object):
     subclass it.
     """
 
-    def __init__(self, area, rect, tmxdata=None):
+    def __init__(self, area, rect):
         rect = Rect(rect)
         self.rect = rect    # area of screen it occupies
         self.area = area    # area of the map to be viewed
         self.set_extent(rect)
 
         # create a renderer for the map
-        self.maprender = BufferedTilemapRenderer(tmxdata, rect)
-        self.map_width = tmxdata.tilewidth * tmxdata.width
-        self.map_height = tmxdata.tileheight*tmxdata.height
+        self.maprender = BufferedTilemapRenderer(area.tmxdata, rect)
+        self.map_width = area.tmxdata.tilewidth * area.tmxdata.width
+        self.map_height = area.tmxdata.tileheight * area.tmxdata.height
         self.blank = True
 
         # add the avatars
@@ -130,7 +130,7 @@ class LevelCamera(object):
         # should not be sorted every frame
         onScreen.sort(key=screenSorter)
 
-        #return self.maprender.draw(surface, onScreen)
+        return self.maprender.draw(surface, onScreen)
 
         dirty = self.maprender.draw(surface, onScreen)
 

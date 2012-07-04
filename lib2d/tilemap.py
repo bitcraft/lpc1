@@ -289,7 +289,6 @@ class BufferedTilemapRenderer(object):
 
         passing a list here will correctly draw the surfaces to create the
         illusion of depth.
-
         """
 
         if self.blank:
@@ -307,6 +306,9 @@ class BufferedTilemapRenderer(object):
         # its defined area.
         origClip = surface.get_clip()
         surface.set_clip(self.rect)
+        surface.set_clip(None)
+
+        print ox, oy, self.rect, self.view
 
         surblit(self.buffer, (-ox, -oy))
 
@@ -385,44 +387,6 @@ class BufferedTilemapRenderer(object):
         return (x*self.tmx.tilewidth - (self.view.left*self.tmx.tilewidth),
                 y*self.tmx.tileheight - (self.view.top*self.tmx.tileheight))
 
-
-def floydsteinberg(surface):
-    """SLOW"""
-
-    def closest(color):
-        r = 255 if color[0] > 128 else 0
-        g = 255 if color[1] > 128 else 0
-        b = 255 if color[2] > 128 else 0
-        return r, g, b
-
-    def diff(a, b):
-        return a[0]-b[0], a[1]-b[1], a[2]-b[2]
-
-    def calc(s, p, c, e):
-        try:
-            s.set_at(p, [ v + c * e[i] for i, v in enumerate(s.get_at(p)[:3]) ])
-        except:
-            pass
-
-    sx, sy = surface.get_size()
-    surface = surface.copy()
-    surface.lock()
-    cf1 = 7/16
-    cf2 = 3/16
-    cf3 = 5/16
-    cf4 = 1/16
-    p = product(xrange(sx), xrange(sy))
-    for x, y in p:
-        op = surface.get_at((x, y))
-        np = closest(op)
-        surface.set_at((x, y), np)
-        error = diff(op, np)
-        calc(surface, (x+1,y), cf1, error)
-        calc(surface, (x-1,y+1), cf2, error)
-        calc(surface, (x,y+1), cf3, error)
-        calc(surface, (x+1,y+1), cf4, error)
-    surface.unlock()
-    return surface
 
 
 class ShadowMask(object):

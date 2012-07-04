@@ -20,6 +20,10 @@ region_size = (16, 16)
 
 
 def generateWorld():
+    """
+    sweet hack to generate a random game world
+    """
+
     import array
 
     rect = Rect((0,0), world_size)
@@ -105,15 +109,12 @@ def build():
 
 
     # levels
-    #level = fromTMX(uni, "level1.tmx")
-    #level.setName("Level 1")
-    #level.setGUID(5001)
-
-    level = Area()
+    level = fromTMX(uni, "village.tmx")
+    level.setName("Level 1")
     level.setGUID(5001)
-    uni.add(level)
 
-
-    level.add(npc)
+    #level = Area()
+    #level.setGUID(5001)
+    #uni.add(level)
 
     return uni

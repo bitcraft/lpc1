@@ -93,15 +93,16 @@ class ViewPortManager(object):
 
 
     def draw(self, surface):
-        return 
         dirty = []
         for vp in self.viewports:
             dirty.extend(vp.draw(surface))
 
-        for vp in self.viewports:
-            pygame.draw.rect(surface, (120,120,120), vp.rect, 1)
-
         return dirty
+
+
+    def getRects(self):
+        """ return a list of rects that split the viewports """
+        return [ vp.rect for vp in self.viewports ]
 
 
     def update(self, time):
@@ -150,7 +151,7 @@ class ViewPort(object):
 
 
     def onClick(self, point):
-        print "clickes", self, point
+        pass
 
 
     def onHover(self, point):
@@ -165,29 +166,20 @@ class ViewPort(object):
         if self.blank:
             self.blank = False
             sw, sh = surface.get_size()
-            surface.fill(self.background)
-            self.camera = LevelCamera(self.area, self.rect, tmxdata=self.area.tmxdata)
+            self.camera = LevelCamera(self.area, self.rect)
             self.camera.draw(surface)
-            return [((0,0), (sw, sh))]
+            return self.rect
             
         else:
-            self.camera.center(self.area.getPosition(self.follow))
-            #return self.camera.draw(surface)
-            self.camera.draw(surface)
-
+            self.camera.center((100,100))
+            #self.camera.center(self.area.getPosition(self.follow))
+            return self.camera.draw(surface)
 
 
     def update(self, time):
-        #self.camera.update(time)
-        pass
+        self.camera.update(time)
 
 
-
-class Node(object):
-    def __init__(self, parent, left, right):
-        self.parent = parent
-        self.left = left
-        self.right = right
 
 class LevelState(GameState):
     """
@@ -273,74 +265,26 @@ class LevelState(GameState):
 
 
     def buildViewports(self, surface):
-        self.vpmanager = ViewPortManager(surface.get_rect())
+        x, y, w, h = surface.get_rect()
+        w *= .75
+        self.vpmanager = ViewPortManager((x, y, w, h))
         self.vpmanager.new(self.area, self.hero)
         self.vpmanager.new(self.area, self.hero)
 
 
     def draw(self, surface):
+        surface.fill((randint(0, 255),0,0))
         if self.blank:
             self.blank = False
             self.buildViewports(surface)
 
         self.vpmanager.draw(surface)
 
+        #for rect in self.vpmanager.getRects():
+        #    self.border.draw(surface, rect)
+
         if self.input_changed:
-            print "chc"
             self.input_changed = False
-            world_size = 320, 240
-            region_size = 32, 32
-
-            import random
-            from collections import deque
-            from pygame import Rect
-            rect = Rect((0,0), world_size)
-
-            regions = [rect]
-
-            i = 320
-            bag = [True, False] * (i/2)
-
-            max_depth = 8
-            depth = 0
-
-            while depth < max_depth:
-                queue = deque(regions)
-                regions = []
-                depth += 1
-
-                while bag and queue:
-                    #random.shuffle(bag)
-                    rect = queue.pop()
-                    split = bag.pop()
-                    w,h = rect.size
-
-                    if rect.height > 0:
-                        r = float(rect.width) / rect.height
-                        if r < .5:
-                            split = False
-                        elif r > 1.5:
-                            split = True
-
-                    # True is a horizontal split
-                    if split:
-                        d = random.randint(-rect.width/8, rect.width/8)
-                        w = rect.width/2 + d
-                        a = Rect(rect.left, rect.top, w, rect.height)
-                        b = Rect(rect.left + w, rect.top, rect.width - w, rect.height)
-                    else:
-                        d = random.randint(-rect.height/8, rect.height/8)
-                        h = rect.height/2 + d
-                        a = Rect(rect.left, rect.top, rect.width, h)
-                        b = Rect(rect.left, rect.top + h, rect.width, rect.height - h)
-
-                    regions.append(a)
-                    regions.append(b)
-
-
-            surface.fill((0,0,0))
-            for rect in regions:
-                pygame.draw.rect(surface, (random.randint(128,255),random.randint(128, 255),128), rect, 1)
 
 
     def update(self, time):
