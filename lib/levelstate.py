@@ -118,21 +118,28 @@ class ViewPortManager(object):
     def handle_commandlist(self, cmdlist):
         for cls, cmd, arg in cmdlist:
             if cmd == CLICK1:
-                if isinstance(arg, tuple):
-                    state, pos = arg
-                    vp = self.findViewport(pos)
-                    if vp:
-                        x, y = pos
-                        x -= vp.rect.left
-                        y -= vp.rect.top
-                        vp.onClick((x, y))
-                else:
-                    state = arg
+                state, pos = arg
+                vp = self.findViewport(pos)
+                if vp:
+                    x, y = pos
+                    x -= vp.rect.left
+                    y -= vp.rect.top
+                    if state == BUTTONDOWN:
+                        vp.onClick(pos)
+
+                    elif state == BUTTONHELD:
+                        vp.onDrag(pos)
 
             elif cmd == CLICK2:
                 pass
             elif cmd == MOUSEPOS:
-                pass
+                vp = self.findViewport(arg)
+                if vp:
+                    x, y = arg
+                    x -= vp.rect.left
+                    y -= vp.rect.top
+                    vp.onHover((x, y))
+
 
 
 class ViewPort(object):
@@ -151,11 +158,20 @@ class ViewPort(object):
 
 
     def onClick(self, point):
-        pass
+        self.camera.center(self.camera.surfaceToWorld(point))
+
+
+    def onDrag(self, point):
+        x, y = point
+        x -= self.rect.centerx
+        y -= self.rect.centery
+        self.camera.center(self.camera.surfaceToWorld((x, y)))
 
 
     def onHover(self, point):
-        pass
+        wp = self.camera.surfaceToWorld(point)
+        ws = self.camera.worldToSurface(wp)
+        print "[Hover]", point, wp, ws
 
 
     def resize(self, rect):
@@ -171,8 +187,6 @@ class ViewPort(object):
             return self.rect
             
         else:
-            self.camera.center((100,100))
-            #self.camera.center(self.area.getPosition(self.follow))
             return self.camera.draw(surface)
 
 
@@ -273,15 +287,14 @@ class LevelState(GameState):
 
 
     def draw(self, surface):
-        surface.fill((randint(0, 255),0,0))
         if self.blank:
             self.blank = False
             self.buildViewports(surface)
 
         self.vpmanager.draw(surface)
 
-        #for rect in self.vpmanager.getRects():
-        #    self.border.draw(surface, rect)
+        for rect in self.vpmanager.getRects():
+            self.border.draw(surface, rect)
 
         if self.input_changed:
             self.input_changed = False

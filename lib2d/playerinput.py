@@ -134,6 +134,7 @@ class MousePlayerInput(PlayerInput):
     
     def __init__(self, keymap=None):
         self.held = []
+        self.last_pos = None
 
 
     def scalePoint(self, point):
@@ -145,10 +146,10 @@ class MousePlayerInput(PlayerInput):
 
     def getHeld(self):
         """
-        return a list of keys that are being held down
+        lets you know when click/dragging
         """
 
-        return [ (self.__class__, key, BUTTONHELD) for key in self.held ]
+        return [ (self.__class__, key, (BUTTONHELD, self.last_pos)) for key in self.held ]
 
 
     def getCommand(self, event):
@@ -184,6 +185,7 @@ class MousePlayerInput(PlayerInput):
 
         elif event.type == MOUSEMOTION:
             point = self.scalePoint(event.pos)
+            self.last_pos = point
             return self.__class__, MOUSEPOS, point
 
 

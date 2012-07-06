@@ -42,9 +42,9 @@ class GraphicBox(object):
         tiles = [ image.subsurface((i*self.tw, 0, self.tw, self.th))
                   for i in range(9) ]
 
-        #if self.hollow:
-        #    ck = tiles[8].get_at((0,0))
-        #    [ t.set_colorkey(ck, RLEACCEL) for t in tiles ]
+        if self.hollow:
+            ck = tiles[8].get_at((0,0))
+            [ t.set_colorkey(ck, RLEACCEL) for t in tiles ]
 
         self.tiles = dict(zip(names, tiles))
         self.background = self.tiles['c'].get_at((0,0))

@@ -100,7 +100,133 @@ class Sound(object):
 
 
 
-class Area(AbstractArea):
+class AdventureMixin(object):
+    """
+    Mixin class that contains methods to translate world coordinates to screen
+    or surface coordinates.
+    The methods will translate coordinates of the tiled map
+
+    TODO: manipulate the tmx loader to swap the axis
+    """
+
+    def tileToWorld(self, (x, y, z)):
+        xx = int(x) * self.tmxdata.tileheight
+        yy = int(y) * self.tmxdata.tilewidth
+        return xx, yy, z
+
+
+    def pixelToWorld(self, (x, y)):
+        return (y, x, 0)
+
+
+    def toRect(self, bbox):
+        # return a rect that represents the object on the xy plane
+        # currently this is used for geometry collision detection
+        return Rect((bbox.x, bbox.y, bbox.depth, bbox.width))
+
+
+    def worldToPixel(self, (x, y, z)):
+        return (y, x)
+
+
+    def worldToTile(self, (x, y, z)):
+        xx = int(x) / self.tmxdata.tilewidth
+        yy = int(y) / self.tmxdata.tileheight
+        zz = 0
+        return xx, yy, zz
+
+
+    """
+    the underlying physics 'engine' is anly capable of calculating
+    physics on 2 axises.  so, we just calulate the xy plane and fake the z
+    axis
+    """
+    def applyForce(self, body, (x, y, z)):
+        body.acc += Vec2d(x, y)
+
+
+    def updatePhysics(self, body, time):
+        """
+        basic physics
+        """
+     
+        time = time / 100
+
+        if body.gravity:
+            body.acc += Vec2d((0, 9.8)) * time
+    
+        body.vel = body.acc * time
+        y, z = body.vel
+
+        if not y==0:
+            self.movePosition(body, (0, y, 0))
+
+        if z > 0: 
+            falling = self.movePosition(body, (0, 0, z))
+            if falling:
+                body.isFalling = True
+                self._grounded[body] = False
+            else:
+                if body.isFalling:
+                    body.parent.fallDamage(body.vel.y)
+                body.isFalling = False
+                self._grounded[body] = True
+                if int(body.vel.y) >= 1:
+                    body.acc.y = -body.acc.y * .2
+                else:
+                    body.acc.y = 0
+        elif z < 0:
+            flying = self.movePosition(body, (0, 0, z))
+            if flying:
+                self._grounded[body] = False
+                body.isFalling = True
+
+
+    def setForce(self, body, (x, y, z)):
+        body.acc = Vec2d(x, y)
+
+
+class PlatformerMixin(object):
+    """
+    Mixin class is suitable for platformer games
+    """
+
+    def toRect(self, bbox):
+        # return a rect that represents the object on the zy plane
+        return Rect((bbox.y, bbox.z+bbox.height, bbox.width, bbox.height))
+
+
+    """
+    the underlying physics 'engine' is only capable of calculating 2 axises.
+    for playformer type games, we use the zy plane for calculations
+    """
+    def updatePhysics(self, body, time):
+        """
+        basic physics
+        """
+     
+        time = time / 100
+
+        body.vel = body.acc * time
+        x, y = body.vel
+
+        if not y==0 or x==0:
+            self.movePosition(body, (x, y, 0))
+
+
+    def grounded(self, body):
+        try:
+            return self._grounded[body]
+        except:
+            return False
+
+
+    def applyForce(self, body, (x, y, z)):
+        body.acc += Vec2d(y, z)
+
+
+
+class Area(AbstractArea, AdventureMixin):
     """3D environment for things to live in.
     Includes basic pathfinding, collision detection, among other things.
 
@@ -187,18 +313,10 @@ class Area(AbstractArea):
     def load(self):
         import pytmx
 
-        tmxdata = pytmx.TiledMap()
-        tmxdata.tilewidth = 16
-        tmxdata.tileheight = 16
-
-        self.tmxdata = tmxdata
- 
-        return
- 
-        from pytmx import tmxloader
- 
-        self.tmxdata = tmxloader.load_pygame(
+        self.tmxdata = pytmx.tmxloader.load_pygame(
                        self.mappath, force_colorkey=(128,128,0))
+
+        return 
 
         # quadtree for handling collisions with exit tiles
         rects = []
@@ -453,23 +571,9 @@ class Area(AbstractArea):
                 return node
 
         start = start[:2]
-        finish = self._worldToTile(destination[:2])
+        #finish = self._worldToTile(destination[:2])
         path = astar.search(start, finish, NodeFactory)
         return path
-
-
-    def tileToWorld(self, (x, y, z)):
-        xx = int(x) * self.tmxdata.tileheight
-        yy = int(y) * self.tmxdata.tilewidth
-        return xx, yy, z
-
-
-    def pixelToWorld(self, (x, y, z)):
-        return (y, x, z)
-
-
-    def _worldToTile(self, (x, y)):
-        return int(y)/self.tmxdata.tileheight, int(x)/self.tmxdata.tilewidth
 
 
     def emitText(self, text, pos=None, thing=None):
@@ -510,29 +614,6 @@ class Area(AbstractArea):
         self._addQueue = []
         [ self.remove(thing) for thing in self._removeQueue ] 
         self._removeQueue = []
-
-
-    # 2d physics only (on horizontal plane)
-    def updatePhysics(self, body, time):
-        """
-        basic physics
-        """
-     
-        time = time / 100
-
-        body.vel = body.acc * time
-        x, y = body.vel
-
-        if not y==0 or x==0:
-            self.movePosition(body, (x, y, 0))
-
-
-    # platformer
-    def grounded(self, body):
-        try:
-            return self._grounded[body]
-        except:
-            return False
 
 
     def setExtent(self, rect):
@@ -584,15 +665,6 @@ class Area(AbstractArea):
         return [ (o, b.origin) for (o, b) in self.bboxes.items() ]
 
 
-    # for platformers
-    #def toRect(self, bbox):
-    #    return Rect((bbox.y, bbox.z+bbox.height, bbox.width, bbox.height))
-
-
-    # for zelda-type adventures
-    def toRect(self, bbox):
-        return Rect((bbox.x, bbox.y, bbox.depth, bbox.width))
-
 
     def getOldPosition(self, body):
         return self._oldbboxes[body]
@@ -614,13 +686,6 @@ class Area(AbstractArea):
 
 
     #  CLIENT API  --------------
-
-    # zelda-style adventures
-    def worldToTile(self, (x, y, z)):
-        xx = int(x) / self.tmxdata.tilewidth
-        yy = int(y) / self.tmxdata.tileheight
-        zz = 0
-        return xx, yy, zz
 
 
     def join(self, body0, body1):
@@ -654,18 +719,6 @@ class Area(AbstractArea):
         body.bbox = bbox
 
 
-    # for platformers
-    #def applyForce(self, body, (x, y, z)):
-    #    body.acc += Vec2d(y, z)
-
-
-    # for zelda-style adventures
-    def applyForce(self, body, (x, y, z)):
-        body.acc += Vec2d(x, y)
-
-
-    def setForce(self, body, (x, y, z)):
-        body.acc = Vec2d(x, y)
 
 
     def getOrientation(self, thing):

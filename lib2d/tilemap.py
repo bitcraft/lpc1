@@ -37,12 +37,11 @@ class BufferedTilemapRenderer(object):
     will blit any tiles needed to the offscreen buffer.
     """
 
-    def __init__(self, tmx, rect, **kwargs):
+    def __init__(self, tmx, size, **kwargs):
         self.default_image = generateDefaultImage((tmx.tilewidth,
                                                    tmx.tileheight))
         self.tmx = tmx
-        self.setSize(rect.size)
-        self.rect = rect
+        self.setSize(size)
 
 
     def setSize(self, size):
@@ -93,6 +92,10 @@ class BufferedTilemapRenderer(object):
     def center(self, (x, y)):
         """
         center the map on a pixel
+        pixel coordinates have the origin on the upper-left corner
+
+        TODO: rewrite the tilemap to follow standard 'right handed' cartesian
+        point system.
 
         opt: ok
         """
@@ -277,7 +280,7 @@ class BufferedTilemapRenderer(object):
                     bufblit(image, (x * tw - ltw, y * th - tth))
 
 
-    def draw(self, surface, surfaces=[]):
+    def draw(self, surface, rect, surfaces=[]):
         """
         draw the map onto a surface.
     
@@ -295,20 +298,18 @@ class BufferedTilemapRenderer(object):
             self.redraw()
             self.blank = False
 
+
         surblit = surface.blit
         left, top = self.view.topleft
         ox, oy = self.xoffset, self.yoffset
-        ox -= self.rect.left
-        oy -= self.rect.top
+        ox -= rect.left
+        oy -= rect.top
         getTile = self.getTileImage
 
         # set clipping.  need to do this, otherwise the map will draw outside
         # its defined area.
         origClip = surface.get_clip()
-        surface.set_clip(self.rect)
-        surface.set_clip(None)
-
-        print ox, oy, self.rect, self.view
+        surface.set_clip(rect)
 
         surblit(self.buffer, (-ox, -oy))
 
@@ -339,7 +340,7 @@ class BufferedTilemapRenderer(object):
         if self.idle:
             return [ i[0] for i in dirty ]
         else:
-            return [ self.rect ]
+            return [ rect ]
 
 
     def flushQueue(self):
@@ -355,9 +356,9 @@ class BufferedTilemapRenderer(object):
             tth = self.view.top * th
             getTile = self.getTileImage
 
-            images = ifilter(lambda x: x[1], ((i, getTile(i)) for i in self.queue) )
+            images = ifilter(lambda x: x[1], ((i, getTile(i)) for i in self.queue))
+            [ blit(image, (x*tw-ltw, y*th-tth)) for ((x,y,l), image) in images ]
 
-            [ blit(image, (x*tw-ltw, y * th-tth)) for ((x,y,l), image) in images ]
 
             self.queue = None
 

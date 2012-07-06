@@ -32,30 +32,30 @@
   </tile>
  </tileset>
  <tileset firstgid="324" source="../tilesets/controlset.tsx"/>
- <layer name="Lower Full Tile" width="32" height="32" visible="0">
+ <layer name="Lower Full Tile" width="32" height="32">
   <data encoding="base64" compression="gzip">
    H4sIAAAAAAAAA+2VMQ7AMAgD+QFz/v/RTt2MaxA0C0geWgRHCTTHzM6K6rXpGJYnk4/FZPPd5k+dpcr3BrFaJmeSsSM+sox/kh9Z1BMnvm4+eufEp/K/auvmZ3YH1YjOn/Ezu6PwUTzjV/ZH+X40e8vv4StSYhG/439fvQ+UnqvPnX3L2vJn51bNU5nFv+Z8tVrd1wPt/P/EABAAAA==
   </data>
  </layer>
- <layer name="Lower Partial Tile" width="32" height="32" visible="0">
+ <layer name="Lower Partial Tile" width="32" height="32">
   <data encoding="base64" compression="gzip">
    H4sIAAAAAAAAA1NlYGBQAWJVIBYBYlEoWw2KVZD4uNhqSHpxqcGlzw0NuwOxBx4+PrXIYjCaEKY3CAPicCCOgNL0tjsHiDOgOJPO9qdD7a0cIPsroHZXIdH0BJ1A3AXE3UAczQAJg4ECsLgYqfZXDLD9IP9XDqD9IP/TO/8hg4GOf5D9A+3/gbR/MMQ/PcrfLTjEYXXBQAFYXUAvgCscRsHgBUuBeNlAO2IU0BycIFLdMQr1UxsMpjJloMJgqAMA0o1rkQAQAAA=
   </data>
  </layer>
- <layer name="Upper 1 Partial Tile" width="32" height="32" visible="0">
+ <layer name="Upper 1 Partial Tile" width="32" height="32">
   <data encoding="base64" compression="gzip">
    H4sIAAAAAAAAA2NgGAWDCfQSoSYRiJNo7RAo4AVibiDmAmI+GuoZKLAKStMzTJHB7gGwcxQQD7jpbB+5eWco5TlyAciPXAPtCBqApUC8bKAdQQIAxQMHA2paw1dvYVM/CiCAmPp+FJAO8OUpUsMcvWwF8XnQ+MO97B0FAwOwpdXhWGYMRz8NBQAAWCnavwAQAAA=
   </data>
  </layer>
- <layer name="Upper 2 Partial Tile" width="32" height="32" visible="0">
+ <layer name="Upper 2 Partial Tile" width="32" height="32">
+  <properties>
+   <property name="visible" value="1"/>
+  </properties>
   <data encoding="base64" compression="gzip">
    H4sIAAAAAAAAA+2XS04CQRCGR2HhAlig3GBkgTx8xHvoVXTBhh0sOIAsuC3VoSrp/FR3VY84GsOffJlppqZeVDehqv6+JsRLC+8ErWD9QEyJJ+KZP3sj3jM+tHdSWhrPZ8ScWBCPhm2Td7ZOnz+lPV+tnrYpz+w0nS9LODsYY6LYnFPTyLeAuaFNnFuqJ95+4ewulNy0+LmelPSrT/SIG2KQyE2Ln9tzqX6Vqs95lfqz7D+Iz1+MvyY2Dj+i0jPRsv8idgXxpQ/ajJzD3uOvx4g//N2y7C86Kte3WHh+WWvvnvIIzy9rHVS6pzRJDbh/rHVQbk95ey414JmM+yl3Zn9HpefCRf9P2qx651d0RVwzHaJL3DJtaBjFE2qIX1qTprjOUGOHY9xxvFcgVX/T/wJanVrMOJf4e5H7kO+oOv3OZF0zXeV5XZ3WWgMjvt5H1zHfS+wx3OdAHwI+1/wdAK93ia0AEAAA
   </data>
  </layer>
- <layer name="Control" width="32" height="32">
-  <properties>
-   <property name="visible" value="0"/>
-  </properties>
+ <layer name="Control" width="32" height="32" visible="0">
   <data encoding="base64" compression="gzip">
    H4sIAAAAAAAAA+2WUQ6DMAiGK2fzCB5hc9O57f5vxgeTzdC/YKE1UZI+iJSvUEDbJoT2xOtLoaik+IsO2f/qpIyYXhL/ancjzOT23CmfbymIn8qpN7+0HJXP5Qi923tn1nx0JmQf4/dMv0n4L8E+xJfkTJt/S/6T6vGRvxy+to4Rv2P8eMU/0L+/lP1INnwLOQrf+5uD5EOy+GN9nzuPPfnoLKtey39sZs+0eX4r/pEkfO/6kMZ/8evxufvfUxOxXikVf4pvVefaWWEdv5Zfe83OE7TfABAAAA==
   </data>

@@ -11,8 +11,10 @@ def screenSorter(a):
 
 class LevelCamera(object):
     """
-    Base class for displaying maps.  Not really featured, here, you should
-    subclass it.
+    The level camera manages sprites on the screen and a tilemap renderer.
+    When creating a level camera, you must pass a rect that defiens the area
+    of the surface/screen that is is drawing to.  Various values are cached to
+    give a modest speed improvement, so this is a hard limitation.
     """
 
     def __init__(self, area, rect):
@@ -22,9 +24,11 @@ class LevelCamera(object):
         self.set_extent(rect)
 
         # create a renderer for the map
-        self.maprender = BufferedTilemapRenderer(area.tmxdata, rect)
-        self.map_width = area.tmxdata.tilewidth * area.tmxdata.width
-        self.map_height = area.tmxdata.tileheight * area.tmxdata.height
+        self.maprender = BufferedTilemapRenderer(area.tmxdata, rect.size)
+
+        # translate tiled map coordinates to world coordinates (swap x & y)
+        self.map_height = area.tmxdata.tilewidth * area.tmxdata.width
+        self.map_width = area.tmxdata.tileheight * area.tmxdata.height
         self.blank = True
 
         # add the avatars
@@ -53,7 +57,10 @@ class LevelCamera(object):
         nessessary to call this instead of setting the extent directly.
         """
 
-        self.extent = Rect(extent)
+        # our game world swaps the x and y axis, so we translate it here
+        x, y, w, h = Rect(extent)
+        self.extent = Rect(0, 0, h, w)
+
         self.half_width = self.extent.width / 2
         self.half_height = self.extent.height / 2
         self.width  = self.extent.width
@@ -72,35 +79,39 @@ class LevelCamera(object):
                     pass
 
 
-    def center(self, pos):
+    def center(self, (x, y, z)):
         """
-        center the camera on a pixel location.
+        center the camera on a world location.
+        expects to be in world coordinates (x & y axis swapped)
         """
 
-        x, y = self.toSurface(pos)
+        self.extent.center = (x, y)
+        self.maprender.center(self.worldToSurface((x,y,z)))
 
-        if self.map_width > self.width:
-            if x < self.half_width:
-                x = self.half_width
+        return
 
-            elif x > self.map_width - self.half_width - 1:
-                x = self.map_width - self.half_width - 1
-
-        else:
-            x = self.map_width / 2
 
 
         if self.map_height > self.height:
-            if y < self.half_height:
-                y = self.half_height
+            if x < self.half_height:
+                x = self.half_height
 
-            elif y > self.map_height - self.half_height:
-                y = self.map_height - self.half_height
+            elif x > self.map_height - self.half_height:
+                x = self.map_height - self.half_height
         else:
-            y = self.map_height / 2
+            x = self.map_height / 2
 
-        self.extent.center = (x, y)
-        self.maprender.center((x, y))
+        if self.map_width > self.width:
+            if y < self.half_width:
+                y = self.half_width
+
+            elif y > self.map_width - self.half_width - 1:
+                y = self.map_width - self.half_width - 1
+
+        else:
+            y = self.map_width / 2
+
+
 
 
     def clear(self, surface):
@@ -116,50 +127,52 @@ class LevelCamera(object):
             self.blank = False
             self.maprender.blank = True
 
+        self.maprender.redraw()
+
         # quadtree collision testing would be good here
         for a in avatarobjects:
             bbox = self.area.getBBox(a)
             x, y, z, d, w, h = bbox
-            x, y = self.toSurface((x, y, z))
+            x, y = self.worldToSurface((x, y, z))
             xx, yy = a.avatar.axis
             x += xx
             y += yy
             if self.extent.colliderect((x, y, w, h)):
-                onScreen.append((a.avatar.image, Rect(self.toScreen((x, y)), (w, h)), 1, a, bbox))
+                onScreen.append((a.avatar.image, Rect(self.worldToScreen((x, y)), (w, h)), 1, a, bbox))
 
         # should not be sorted every frame
         onScreen.sort(key=screenSorter)
 
-        return self.maprender.draw(surface, onScreen)
+        return self.maprender.draw(surface, self.rect, onScreen)
 
-        dirty = self.maprender.draw(surface, onScreen)
+        dirty = self.maprender.draw(surface, self.rect, onScreen)
 
         clip = surface.get_clip()
         surface.set_clip(self.rect)
 
         #for (x, y, w, h) in self.area.geoRect:
         #    draw.rect(surface, (128,128,255), \
-        #    (self.toScreen(self.toSurface((0, x, y))), (w, h)), 1)
+        #    (self.toScreen(self.worldToSurface((0, x, y))), (w, h)), 1)
 
         for i, r, l, a, b in onScreen:
             x, y, z, d, w, h, = b
-            x, y = self.toScreen(self.toSurface((x, y, z+h)))
+            x, y = self.toScreen(self.worldToSurface((x, y, z+h)))
             draw.rect(surface, (255,128,128), (x, y, w, h), 1)
 
         surface.set_clip(clip)
         return dirty
 
 
-    def toScreen(self, (x, y)):
+    def worldToScreen(self, (x, y)):
         """
         Transform the world to coordinates on the screen
         """
 
-        return (x * self.zoom - self.extent.left + self.rect.left,
-                y * self.zoom - self.extent.top + self.rect.top)
+        return (x - self.extent.left + self.rect.left,
+                y - self.extent.top + self.rect.top)
 
 
-    def toSurface(self, pos):
+    def worldToSurface(self, (x, y, z)):
         """
         Translate world coordinates to coordinates on the surface
         underlying area is based on 'right handed' 3d coordinate system
@@ -167,15 +180,14 @@ class LevelCamera(object):
         z is the vertical plane
         """
 
-        return pos[1], pos[0]
+
+        return self.area.worldToPixel((x, y, z))
 
 
-    def toWorld(self, (x, y)):
+    def surfaceToWorld(self, (x, y)):
         """
-        Transform screen coordinates to coordinates in the world
+        Transform surface coordinates to coordinates in the world
+        surface coordinates take into account the camera's extent
         """
 
-        # the screen is usually doubled, so we have to halve
-        # the coordinate values here
-        return ((x/2) * self.zoom + self.extent.left - self.rect.left,
-                (y/2) * self.zoom + self.extent.top + self.rect.top)
+        return self.area.pixelToWorld((x+self.extent.top,y+self.extent.left))
