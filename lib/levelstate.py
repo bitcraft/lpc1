@@ -73,10 +73,12 @@ state = None
 class ViewPortManager(object):
     """
     Class is capable of managing multiple cameras of different areas
+    because it is managing cameras, areas are also managed here
     """
 
     def __init__(self, rect):
         self.viewports = []
+        self.areas = []
         self.rect = pygame.Rect(rect)
         self.vprects = []
 
@@ -84,8 +86,24 @@ class ViewPortManager(object):
         self.drag_start = None
         self.drag_vp = None
 
+    def addArea(self, area):
+        if area not in self.areas:
+            self.areas.append(area)
+            area.load()
+
+            # load the children
+            for child in area.getChildren():
+                child.load()
+
+            # load sounds from area
+            for filename in area.soundFiles:
+                SoundMan.loadSound(filename)
+
 
     def new(self, area, follow):
+        if area not in self.areas:
+            self.addArea(area)
+
         if len(self.viewports) == 0:
             rect = self.rect.copy()
 
@@ -98,7 +116,7 @@ class ViewPortManager(object):
             w = self.rect.width / 2
             h = self.rect.height / 2
             rect = self.rect.copy()
-            # WARNING!!!! does not work
+            # WARNING!!!! 3 panes does not work
 
         elif len(self.viewports) == 3:
             w = self.rect.width / 2
@@ -128,6 +146,7 @@ class ViewPortManager(object):
 
     def update(self, time):
         [ vp.update(time) for vp in self.viewports ]
+        [ area.update(time) for area in self.areas ]
         
 
     def findViewport(self, point):
@@ -159,7 +178,6 @@ class ViewPortManager(object):
                 if vp:
                     pos = (arg[0] - vp.rect.left, arg[1] - vp.rect.top)
                     vp.onHover(pos)
-
 
 
 class ViewPort(object):
@@ -195,7 +213,6 @@ class ViewPort(object):
     def onHover(self, point):
         wp = self.camera.surfaceToWorld(point)
         ws = self.camera.worldToSurface(wp)
-        print "[Hover]", point, wp, ws, self.rect
 
 
     def setRect(self, rect):
@@ -219,7 +236,6 @@ class ViewPort(object):
 
     def update(self, time):
         self.camera.update(time)
-
 
 
 class LevelState(GameState):
@@ -263,14 +279,6 @@ class LevelState(GameState):
         self.border = gui.GraphicBox("dialog2-h.png", hollow=True)
         self.borderFilled = gui.GraphicBox("dialog2.png")
         self.vpmanager = None
-        self.input_changed = True
-
-        # allow the area to get needed data
-        self.area.load()
-
-        # load the children
-        for child in self.area.getChildren():
-            child.load()
 
         # get the root and the hero from it
         root = self.area.getRoot()
@@ -283,9 +291,7 @@ class LevelState(GameState):
 
         hero_body = self.area.getBody(self.hero)
 
-        # load sounds from area
-        for filename in self.area.soundFiles:
-            SoundMan.loadSound(filename)
+
 
         self.reactivate()
 
@@ -325,26 +331,15 @@ class LevelState(GameState):
         for rect in self.vpmanager.getRects():
             self.border.draw(surface, rect.inflate(6,6))
 
-        if self.input_changed:
-            self.input_changed = False
-
 
     def update(self, time):
         if self.blank: return
-
-        self.area.update(time)
         self.vpmanager.update(time)
 
 
     def handle_commandlist(self, cmdlist):
         if self.blank: return
-
         self.vpmanager.handle_commandlist(cmdlist)
-
-        for cls, cmd, arg in cmdlist:
-            # these actions will not repeat if button is held
-            if arg == BUTTONDOWN:
-                self.input_changed = True
 
 
 @receiver(emitText)

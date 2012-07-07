@@ -112,8 +112,6 @@ class BufferedTilemapRenderer(object):
         opt: ok
         """
 
-        print "c1"
-
         x, y = int(x), int(y)
 
         if (self.oldX == x) and (self.oldY == y):
@@ -150,8 +148,6 @@ class BufferedTilemapRenderer(object):
             self.adjustView((int(dx), int(dy)))
 
         self.oldX, self.oldY = x, y
-
-        print "c2"
 
 
     def getTileImage(self, (x, y, l)):

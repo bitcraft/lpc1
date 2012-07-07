@@ -124,8 +124,9 @@ class LevelCamera(object):
             xx, yy = a.avatar.axis
             x += xx
             y += yy
-            if self.extent.colliderect((x, y, w, h)):
-                onScreen.append((a.avatar.image, Rect(self.worldToScreen((x, y)), (w, h)), 1, a, bbox))
+            x = x - self.extent.top + rect.top
+            y = y - self.extent.left - rect.left
+            onScreen.append((a.avatar.image, Rect((x, y), (w, h)), 1, a, bbox))
 
         # should not be sorted every frame
         onScreen.sort(key=screenSorter)
@@ -155,8 +156,8 @@ class LevelCamera(object):
         Transform the world to coordinates on the screen
         """
 
-        return (x - self.extent.left + self.rect.left,
-                y - self.extent.top + self.rect.top)
+        return (y - self.extent.left + self.rect.left,
+                x - self.extent.top + self.rect.top)
 
 
     def worldToSurface(self, (x, y, z)):
@@ -166,7 +167,6 @@ class LevelCamera(object):
         xy is horizontal plane, with x pointing toward observer
         z is the vertical plane
         """
-
 
         return self.area.worldToPixel((x, y, z))
 
