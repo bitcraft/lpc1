@@ -52,6 +52,7 @@ class BufferedTilemapRenderer(object):
 
         import quadtree
 
+        """
         left, self.xoffset = divmod(size[0] / 2, self.tmx.tilewidth)
         top,  self.yoffset = divmod(size[1] / 2, self.tmx.tileheight)
 
@@ -60,6 +61,17 @@ class BufferedTilemapRenderer(object):
 
         self.oldX = self.xoffset + (left * self.tmx.tilewidth) 
         self.oldY = self.yoffset + (top  * self.tmx.tileheight)
+
+        """
+        left = 0
+        top = 0
+        self.xoffset = 0
+        self.yoffset = 0
+        self.oldX = 0
+        self.oldY = 0
+
+        self.view = pygame.Rect(left,top, (size[0] / self.tmx.tilewidth), 
+                               (size[1] / self.tmx.tileheight))
 
         self.bufferWidth  = size[0] + self.tmx.tilewidth * 2
         self.bufferHeight = size[1] + self.tmx.tileheight * 2
@@ -100,6 +112,8 @@ class BufferedTilemapRenderer(object):
         opt: ok
         """
 
+        print "c1"
+
         x, y = int(x), int(y)
 
         if (self.oldX == x) and (self.oldY == y):
@@ -136,6 +150,8 @@ class BufferedTilemapRenderer(object):
             self.adjustView((int(dx), int(dy)))
 
         self.oldX, self.oldY = x, y
+
+        print "c2"
 
 
     def getTileImage(self, (x, y, l)):

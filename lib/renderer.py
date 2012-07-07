@@ -12,29 +12,23 @@ def screenSorter(a):
 class LevelCamera(object):
     """
     The level camera manages sprites on the screen and a tilemap renderer.
-    When creating a level camera, you must pass a rect that defiens the area
-    of the surface/screen that is is drawing to.  Various values are cached to
-    give a modest speed improvement, so this is a hard limitation.
     """
 
-    def __init__(self, area, rect):
-        rect = Rect(rect)
-        self.rect = rect    # area of screen it occupies
-        self.area = area    # area of the map to be viewed
-        self.set_extent(rect)
+    def __init__(self, area, extent):
+        self.area = area
+        self.set_extent(extent)
+
+        # axis swap
+        h, w = self.extent.size
 
         # create a renderer for the map
-        self.maprender = BufferedTilemapRenderer(area.tmxdata, rect.size)
+        self.maprender = BufferedTilemapRenderer(area.tmxdata, (w, h))
+        self.maprender.center(self.extent.center)
 
         # translate tiled map coordinates to world coordinates (swap x & y)
         self.map_height = area.tmxdata.tilewidth * area.tmxdata.width
         self.map_width = area.tmxdata.tileheight * area.tmxdata.height
         self.blank = True
-
-        # add the avatars
-        #for child in self.area.getChildren():
-        ##    if isinstance(child, AvatarObject):
-        #        child.avatar.update(0)              # hack to re-init avatar
 
         self.ao = self.refreshAvatarObjects()
  
@@ -59,7 +53,7 @@ class LevelCamera(object):
 
         # our game world swaps the x and y axis, so we translate it here
         x, y, w, h = Rect(extent)
-        self.extent = Rect(0, 0, h, w)
+        self.extent = Rect(y, x, h, w)
 
         self.half_width = self.extent.width / 2
         self.half_height = self.extent.height / 2
@@ -68,15 +62,9 @@ class LevelCamera(object):
         self.zoom = 1.0
 
 
+
     def update(self, time):
         self.maprender.update(None)
-        for ao in self.refreshAvatarObjects():
-            if ao: 
-                # HACK
-                try:
-                   ao.avatar.update(time)
-                except:
-                    pass
 
 
     def center(self, (x, y, z)):
@@ -118,16 +106,15 @@ class LevelCamera(object):
         raise NotImplementedError
 
 
-    def draw(self, surface):
-        avatarobjects = self.refreshAvatarObjects()
-
+    def draw(self, surface, rect):
+        self.rect = rect
         onScreen = []
+
+        avatarobjects = self.refreshAvatarObjects()
 
         if self.blank:
             self.blank = False
             self.maprender.blank = True
-
-        self.maprender.redraw()
 
         # quadtree collision testing would be good here
         for a in avatarobjects:
@@ -143,9 +130,9 @@ class LevelCamera(object):
         # should not be sorted every frame
         onScreen.sort(key=screenSorter)
 
-        return self.maprender.draw(surface, self.rect, onScreen)
+        return self.maprender.draw(surface, rect, onScreen)
 
-        dirty = self.maprender.draw(surface, self.rect, onScreen)
+        dirty = self.maprender.draw(surface, rect, onScreen)
 
         clip = surface.get_clip()
         surface.set_clip(self.rect)

@@ -71,38 +71,59 @@ state = None
 
 
 class ViewPortManager(object):
+    """
+    Class is capable of managing multiple cameras of different areas
+    """
+
     def __init__(self, rect):
         self.viewports = []
         self.rect = pygame.Rect(rect)
+        self.vprects = []
+
+        #mouse hack
+        self.drag_start = None
+        self.drag_vp = None
 
 
     def new(self, area, follow):
         if len(self.viewports) == 0:
             rect = self.rect.copy()
+
         elif len(self.viewports) == 1:
             rect = self.rect.copy()
             rect.height = rect.height / 2
-            self.viewports[0].rect = rect
             rect = rect.move((0, rect.height))
-        elif len(self.viewports) == 2:
-            rect = self.rect.copy()
-            pass
 
-        vp = ViewPort(area, follow, rect) 
+        elif len(self.viewports) == 2:
+            w = self.rect.width / 2
+            h = self.rect.height / 2
+            rect = self.rect.copy()
+            # WARNING!!!! does not work
+
+        elif len(self.viewports) == 3:
+            w = self.rect.width / 2
+            h = self.rect.height / 2
+            self.vprects[0] = pygame.Rect(0,0,w,h)
+            self.vprects[1] = pygame.Rect(w,0,w,h)
+            self.vprects[2] = pygame.Rect(0,h,w,h)
+            rect = pygame.Rect(w,h,w,h)           
+ 
+        vp = ViewPort(area, follow)
         self.viewports.append(vp)
+        self.vprects.append(rect)
 
 
     def draw(self, surface):
         dirty = []
-        for vp in self.viewports:
-            dirty.extend(vp.draw(surface))
+        for i, vp in enumerate(self.viewports):
+            dirty.extend(vp.draw(surface, self.vprects[i]))
 
         return dirty
 
 
     def getRects(self):
         """ return a list of rects that split the viewports """
-        return [ vp.rect for vp in self.viewports ]
+        return list(self.vprects)
 
 
     def update(self, time):
@@ -121,24 +142,23 @@ class ViewPortManager(object):
                 state, pos = arg
                 vp = self.findViewport(pos)
                 if vp:
-                    x, y = pos
-                    x -= vp.rect.left
-                    y -= vp.rect.top
+                    pos = (pos[0] - vp.rect.left, pos[1] - vp.rect.top)
                     if state == BUTTONDOWN:
+                        self.drag_start = pos
+                        self.drag_vp = vp
                         vp.onClick(pos)
 
                     elif state == BUTTONHELD:
-                        vp.onDrag(pos)
+                        if vp == self.drag_vp:
+                            vp.onDrag(pos, self.drag_start)
 
             elif cmd == CLICK2:
                 pass
             elif cmd == MOUSEPOS:
                 vp = self.findViewport(arg)
                 if vp:
-                    x, y = arg
-                    x -= vp.rect.left
-                    y -= vp.rect.top
-                    vp.onHover((x, y))
+                    pos = (arg[0] - vp.rect.left, arg[1] - vp.rect.top)
+                    vp.onHover(pos)
 
 
 
@@ -147,47 +167,54 @@ class ViewPort(object):
     View is the view of one specific game entity
     """
 
-    def __init__(self, area, follow, rect):
+    def __init__(self, area, follow):
         self.background = (109, 109, 109)
         self.foreground = (0, 0, 0)
         self.area = area
         self.follow = follow
-        self.rect = rect
         self.blank = True
+        self.rect = None
         self.camera = None
+        self.drag_origin = None
 
 
     def onClick(self, point):
-        self.camera.center(self.camera.surfaceToWorld(point))
+        self.drag_origin = None
 
 
-    def onDrag(self, point):
-        x, y = point
-        x -= self.rect.centerx
-        y -= self.rect.centery
-        self.camera.center(self.camera.surfaceToWorld((x, y)))
+    def onDrag(self, point, start):
+        if self.drag_origin == None:
+            x, y = self.rect.width / 2, self.rect.height / 2
+            self.drag_origin = self.camera.surfaceToWorld((x, y))
+
+        x, y, z = self.drag_origin
+        dy, dx = point[0] - start[0], point[1] - start[1]
+        self.camera.center((x-dx, y-dy, z))
 
 
     def onHover(self, point):
         wp = self.camera.surfaceToWorld(point)
         ws = self.camera.worldToSurface(wp)
-        print "[Hover]", point, wp, ws
+        print "[Hover]", point, wp, ws, self.rect
 
 
-    def resize(self, rect):
-        pass
+    def setRect(self, rect):
+        self.rect = rect
+        self.blank = True    # causes the camera to be reinitialized in draw()
 
 
-    def draw(self, surface):
+    def draw(self, surface, rect):
+        self.rect = rect
+
         if self.blank:
             self.blank = False
-            sw, sh = surface.get_size()
-            self.camera = LevelCamera(self.area, self.rect)
-            self.camera.draw(surface)
+            x, y, w, h = rect
+            self.camera = LevelCamera(self.area, (0, 0, w, h))
+            self.camera.draw(surface, rect)
             return self.rect
             
         else:
-            return self.camera.draw(surface)
+            return self.camera.draw(surface, rect)
 
 
     def update(self, time):
@@ -280,8 +307,10 @@ class LevelState(GameState):
 
     def buildViewports(self, surface):
         x, y, w, h = surface.get_rect()
-        w *= .75
+        w *= .70
         self.vpmanager = ViewPortManager((x, y, w, h))
+        self.vpmanager.new(self.area, self.hero)
+        self.vpmanager.new(self.area, self.hero)
         self.vpmanager.new(self.area, self.hero)
         self.vpmanager.new(self.area, self.hero)
 
@@ -294,7 +323,7 @@ class LevelState(GameState):
         self.vpmanager.draw(surface)
 
         for rect in self.vpmanager.getRects():
-            self.border.draw(surface, rect)
+            self.border.draw(surface, rect.inflate(6,6))
 
         if self.input_changed:
             self.input_changed = False
