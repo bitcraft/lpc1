@@ -69,18 +69,63 @@ hero_body = None
 state = None
 
 
-
-class ViewPortManager(object):
+class Pane(object):
     """
-    Class is capable of managing multiple cameras of different areas
-    because it is managing cameras, areas are also managed here
+    object capable of interacting with the mouse
+    """
+    pass
+
+
+class MouseTool(object):
+    def onClick(self, pane, point, button):
+        pass
+
+
+    def onDrag(self, pane, point, button, origin):
+        pass
+
+
+    def onHover(self, pane, point):
+        pass
+
+
+
+class PanTool(MouseTool):
+    def __init__(self):
+        self.drag_origin = None
+
+
+    def onClick(self, pane, point, button):
+        self.drag_origin = None
+
+
+    def onDrag(self, pane, point, button, origin):
+        if self.drag_origin == None:
+            x, y = self.rect.width / 2, self.rect.height / 2
+            self.drag_origin = self.camera.surfaceToWorld((x, y))
+
+        x, y, z = self.drag_origin
+        dy, dx = point[0] - start[0], point[1] - start[1]
+        self.camera.center((x-dx, y-dy, z))
+
+
+    def onHover(self, pane, point):
+        pass
+        #wp = self.camera.surfaceToWorld(point)
+        #ws = self.camera.worldToSurface(wp)
+
+
+class PaneManager(object):
+    """
+    Handles pnaes and mouse tools
     """
 
     def __init__(self, rect):
-        self.viewports = []
+        self.panes = []
         self.areas = []
         self.rect = pygame.Rect(rect)
-        self.vprects = []
+
+        self.mouse_tool = PanTool()
 
         #mouse hack
         self.drag_start = None
@@ -104,53 +149,53 @@ class ViewPortManager(object):
         if area not in self.areas:
             self.addArea(area)
 
-        if len(self.viewports) == 0:
+        if len(self.panes) == 0:
             rect = self.rect.copy()
 
-        elif len(self.viewports) == 1:
+        elif len(self.panes) == 1:
             rect = self.rect.copy()
             rect.height = rect.height / 2
             rect = rect.move((0, rect.height))
 
-        elif len(self.viewports) == 2:
+        elif len(self.panes) == 2:
             w = self.rect.width / 2
             h = self.rect.height / 2
             rect = self.rect.copy()
             # WARNING!!!! 3 panes does not work
 
-        elif len(self.viewports) == 3:
+        elif len(self.panes) == 3:
             w = self.rect.width / 2
             h = self.rect.height / 2
-            self.vprects[0] = pygame.Rect(0,0,w,h)
-            self.vprects[1] = pygame.Rect(w,0,w,h)
-            self.vprects[2] = pygame.Rect(0,h,w,h)
+            self.panes[0].rect = pygame.Rect(0,0,w,h)
+            self.panes[1].rect = pygame.Rect(w,0,w,h)
+            self.panes[2].rect = pygame.Rect(0,h,w,h)
             rect = pygame.Rect(w,h,w,h)           
  
         vp = ViewPort(area, follow)
-        self.viewports.append(vp)
-        self.vprects.append(rect)
+        vp.rect = rect
+        self.panes.append(vp)
 
 
     def draw(self, surface):
         dirty = []
-        for i, vp in enumerate(self.viewports):
-            dirty.extend(vp.draw(surface, self.vprects[i]))
+        for i, pane in enumerate(self.panes):
+            dirty.extend(pane.draw(surface, pane.rect))
 
         return dirty
 
 
     def getRects(self):
         """ return a list of rects that split the viewports """
-        return list(self.vprects)
+        return [ pane.rect for pane in self.panes ]
 
 
     def update(self, time):
-        [ vp.update(time) for vp in self.viewports ]
+        [ vp.update(time) for vp in self.panes ]
         [ area.update(time) for area in self.areas ]
         
 
     def findViewport(self, point):
-        for vp in self.viewports:
+        for vp in self.panes:
             if vp.rect.collidepoint(point):
                 return vp
 
@@ -165,11 +210,11 @@ class ViewPortManager(object):
                     if state == BUTTONDOWN:
                         self.drag_start = pos
                         self.drag_vp = vp
-                        vp.onClick(pos)
+                        self.mouse_tool.onClick(vp, pos, 1)
 
                     elif state == BUTTONHELD:
                         if vp == self.drag_vp:
-                            vp.onDrag(pos, self.drag_start)
+                            self.mouse_tool.onDrag(vp, pos, 1, self.drag_start)
 
             elif cmd == CLICK2:
                 pass
@@ -177,10 +222,10 @@ class ViewPortManager(object):
                 vp = self.findViewport(arg)
                 if vp:
                     pos = (arg[0] - vp.rect.left, arg[1] - vp.rect.top)
-                    vp.onHover(pos)
+                    self.mouse_tool.onHover(vp, pos)
 
 
-class ViewPort(object):
+class ViewPort(Pane):
     """
     View is the view of one specific game entity
     """
@@ -193,26 +238,6 @@ class ViewPort(object):
         self.blank = True
         self.rect = None
         self.camera = None
-        self.drag_origin = None
-
-
-    def onClick(self, point):
-        self.drag_origin = None
-
-
-    def onDrag(self, point, start):
-        if self.drag_origin == None:
-            x, y = self.rect.width / 2, self.rect.height / 2
-            self.drag_origin = self.camera.surfaceToWorld((x, y))
-
-        x, y, z = self.drag_origin
-        dy, dx = point[0] - start[0], point[1] - start[1]
-        self.camera.center((x-dx, y-dy, z))
-
-
-    def onHover(self, point):
-        wp = self.camera.surfaceToWorld(point)
-        ws = self.camera.worldToSurface(wp)
 
 
     def setRect(self, rect):
@@ -291,8 +316,6 @@ class LevelState(GameState):
 
         hero_body = self.area.getBody(self.hero)
 
-
-
         self.reactivate()
 
 
@@ -312,9 +335,7 @@ class LevelState(GameState):
 
 
     def buildViewports(self, surface):
-        x, y, w, h = surface.get_rect()
-        w *= .70
-        self.vpmanager = ViewPortManager((x, y, w, h))
+        self.vpmanager = PaneManager(surface.get_rect())
         self.vpmanager.new(self.area, self.hero)
         self.vpmanager.new(self.area, self.hero)
         self.vpmanager.new(self.area, self.hero)
