@@ -279,6 +279,9 @@ class StateDriver(object):
             if currentState: currentState = originalState
 
             if currentState:
+                dirty = currentState.draw(self._screen)
+                gfx.update_display(dirty)
+
                 time = target_fps / 10.0
 
                 currentState.update(time)
@@ -321,8 +324,6 @@ class StateDriver(object):
                 currentState = current_state()
                 if not currentState == originalState: continue
 
-                dirty = currentState.draw(self._screen)
-                gfx.update_display(dirty)
 
 
 # singleton type object

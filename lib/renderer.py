@@ -125,7 +125,7 @@ class LevelCamera(object):
             x += xx
             y += yy
             x = x - self.extent.top + rect.top
-            y = y - self.extent.left - rect.left
+            y = y - self.extent.left + rect.left
             onScreen.append((a.avatar.image, Rect((x, y), (w, h)), 1, a, bbox))
 
         # should not be sorted every frame

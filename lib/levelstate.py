@@ -5,6 +5,7 @@ from lib2d.gamestate import GameState
 from lib2d.statedriver import driver as sd
 from lib2d.buttons import *
 from lib2d.signals import *
+#from lib2d.ui import *
 from lib2d.vec import Vec2d
 from lib2d.quadtree import QuadTree, FrozenRect
 from lib2d import res, gui
@@ -69,7 +70,140 @@ hero_body = None
 state = None
 
 
-class Pane(object):
+"""
+the mouse api is generally as follows:
+
+if the client has a onClick, onHover, or onDrag method, the
+'point' argument will be relative to the rect of the object,
+not the screen.  The point passed will be a Vec2d object
+
+"""
+
+"""
+this module strives to NOT be a replacement for more fucntional gui toolkits.
+this is a bare-bones simple gui toolkit for mouse use only.
+"""
+from renderer import LevelCamera
+from lib2d.buttons import *
+from lib2d import res, gui
+import pygame
+
+
+
+class UserInterface(object):
+    pass
+
+
+class UIElement(object):
+    def __init__(self, parent=None):
+        self.parent = parent
+        self.enabled = False
+        self._rect = None
+
+
+    def setParent(self, parent):
+        self.parent = parent
+
+
+    def draw(self, surface, rect):
+        if not self._rect == rect:
+            self._rect = rect
+            self.onResize(rect)
+        return self.onDraw(surface, rect)
+
+
+    def onResize(self, rect):
+        pass        
+
+
+    def getUI(self):
+        parent = self.parent
+        while not isinstance(parent, UserInterface):
+            parent = parent.parent
+        return parent
+
+
+    def handle_commandlist(self, cmdlist):
+        pass
+
+
+    def onDraw(self, surface, rect):
+        pass
+
+
+    def update(self, time):
+        pass
+
+
+class Packer(UIElement):
+    def __init__(self):
+        self._rect = None
+        self.elements = {}
+
+
+    def getRects(self):
+        """ Return a list of rects that represents the area of this """
+        raise NotImplementedError
+
+
+    def getLayout(self, rect):
+        if not self._rect == rect:
+            self.onResize(rect)
+        return self.elements.items()
+
+
+    def onResize(self, rect):
+        raise NotImplementedError
+
+
+class GridPacker(Packer):
+    """
+    positions widgets in a grid
+    """
+
+    def __init__(self):
+        Packer.__init__(self)
+        self.order = []
+
+
+    def add(self, element):
+        self.elements[element] = None
+        self.order.append(element)
+
+
+    def getRects(self):
+        return list(self.order)
+
+
+    def onResize(self, rect):
+        """ resize the rects for the panes """
+
+        self.rect = pygame.Rect(rect)
+
+        if len(self.elements) == 1:
+            self.elements[self.order[0]] = pygame.Rect(rect)
+
+        elif len(self.elements) == 2:
+            w, h = self.rect.size
+            self.elements[self.order[0]] = pygame.Rect((0,0,w,h/2))
+            self.elements[self.order[1]] = pygame.Rect((0,h/2,w,h/2))
+
+        elif len(self.elements) == 3:
+            w = self.rect.width / 2
+            h = self.rect.height / 2
+            rect = self.rect.copy()
+            # WARNING!!!! 3 panes does not work
+
+        elif len(self.elements) == 4:
+            w = self.rect.width / 2
+            h = self.rect.height / 2
+            self.elements[self.order[0]] = pygame.Rect((0,0,w,h))
+            self.elements[self.order[1]] = pygame.Rect((w,0,w,h))
+            self.elements[self.order[2]] = pygame.Rect((0,h,w,h))
+            self.elements[self.order[3]] = pygame.Rect((w,h,w,h))
+
+
+class Pane(UIElement):
     """
     object capable of interacting with the mouse
     """
@@ -77,6 +211,10 @@ class Pane(object):
 
 
 class MouseTool(object):
+    toole_image = None
+    cursor_image = None
+
+
     def onClick(self, pane, point, button):
         pass
 
@@ -89,278 +227,345 @@ class MouseTool(object):
         pass
 
 
+class GraphicIcon(object):
+    """
+    Clickable Icon
 
-class PanTool(MouseTool):
-    def __init__(self):
-        self.drag_origin = None
+    TODO: cache the image so it isn't duplicated in memory
+    """
 
-
-    def onClick(self, pane, point, button):
-        self.drag_origin = None
-
-
-    def onDrag(self, pane, point, button, origin):
-        if self.drag_origin == None:
-            x, y = self.rect.width / 2, self.rect.height / 2
-            self.drag_origin = self.camera.surfaceToWorld((x, y))
-
-        x, y, z = self.drag_origin
-        dy, dx = point[0] - start[0], point[1] - start[1]
-        self.camera.center((x-dx, y-dy, z))
+    def __init__(self, filename, func, arg=[], kwarg={}, uses=1):
+        self.filename = filename
+        self.func = (func, arg, kwarg)
+        self.uses = uses
+        self.image = None
+        self.load()
 
 
-    def onHover(self, pane, point):
+    def load(self):
+        if self.image == None:
+            self.image = res.loadImage(self.filename)
+            self.enabled = True
+
+    def unload(self):
+        self.image = None
+
+    def onClick(self, point, button, origin):
+        if self.uses > 0 and self.enabled:
+            self.func[0](*self.func[1], **self.func[2])
+            self.uses -= 1
+            if self.uses == 0:
+                self.unload()
+                self.func = None
+
+    def onDrag(self, point, button, origin):
         pass
-        #wp = self.camera.surfaceToWorld(point)
-        #ws = self.camera.worldToSurface(wp)
+
+    def onHover(self, point):
+        pass
+
+    def onDraw(self, surface, rect):
+        return surface.blit(self.image, rect.topleft)
 
 
-class PaneManager(object):
+class RoundMenu(UIElement):
     """
-    Handles pnaes and mouse tools
+    menu that 'explodes' from a center point and presents a group of menu
+    options as a circle of GraphicIcon objects
     """
 
-    def __init__(self, rect):
-        self.panes = []
-        self.areas = []
-        self.rect = pygame.Rect(rect)
-
-        self.mouse_tool = PanTool()
-
-        #mouse hack
-        self.drag_start = None
-        self.drag_vp = None
-
-    def addArea(self, area):
-        if area not in self.areas:
-            self.areas.append(area)
-            area.load()
-
-            # load the children
-            for child in area.getChildren():
-                child.load()
-
-            # load sounds from area
-            for filename in area.soundFiles:
-                SoundMan.loadSound(filename)
+    def __init__(self, items):
+        self.items = []
+        for i in items:
+            i.load()
+            i.enabled = False
 
 
-    def new(self, area, follow):
-        if area not in self.areas:
-            self.addArea(area)
-
-        if len(self.panes) == 0:
-            rect = self.rect.copy()
-
-        elif len(self.panes) == 1:
-            rect = self.rect.copy()
-            rect.height = rect.height / 2
-            rect = rect.move((0, rect.height))
-
-        elif len(self.panes) == 2:
-            w = self.rect.width / 2
-            h = self.rect.height / 2
-            rect = self.rect.copy()
-            # WARNING!!!! 3 panes does not work
-
-        elif len(self.panes) == 3:
-            w = self.rect.width / 2
-            h = self.rect.height / 2
-            self.panes[0].rect = pygame.Rect(0,0,w,h)
-            self.panes[1].rect = pygame.Rect(w,0,w,h)
-            self.panes[2].rect = pygame.Rect(0,h,w,h)
-            rect = pygame.Rect(w,h,w,h)           
- 
-        vp = ViewPort(area, follow)
-        vp.rect = rect
-        self.panes.append(vp)
-
-
-    def draw(self, surface):
+    def open(self):
+        """ start the animation of the menu """
+        self.enabled = True
+        for i in self.items:
+            i.enabled = False
+    
+    def onDraw(self, surface, rect):
         dirty = []
-        for i, pane in enumerate(self.panes):
-            dirty.extend(pane.draw(surface, pane.rect))
-
+        for i, item in enumerate(self.items):
+            x = i*32
+            y = 10
+            dirty.append(item.draw(surface, (x,y)))
         return dirty
 
 
-    def getRects(self):
-        """ return a list of rects that split the viewports """
-        return [ pane.rect for pane in self.panes ]
+class PanTool(MouseTool, UIElement):
+    def __init__(self, parent):
+        MouseTool.__init__(self)
+        UIElement.__init__(self, parent)
+        self.drag_origin = None
 
 
-    def update(self, time):
-        [ vp.update(time) for vp in self.panes ]
-        [ area.update(time) for area in self.areas ]
+    def load(self):
+        self.tool_image = res.loadImage("pantool.png")
+
+
+    def onClick(self, pane, point, button):
+        self.drag_origin = None
+        m = testMenu()
+        #self.getUI().addElement(m)
+        #self.getUI().setRect(m, (pos, (32, 32)))
+        m.open()
+
+
+    def onDrag(self, pane, point, button, origin):
+        if isinstance(pane, ViewPort):
+            if self.drag_origin == None:
+                x, y = pane._rect.width / 2, pane._rect.height / 2
+                self.drag_origin = pane.camera.surfaceToWorld((x, y))
+
+            x, y, z = self.drag_origin
+            dy, dx = point[0] - origin[0], point[1] - origin[1]
+            pane.camera.center((x-dx, y-dy, z))
+
+
+class StandardUI(UserInterface):
+    """
+    Standard UI controls mouse interaction, drawing the maps, and UI
+    elements such as menus
+    """
+
+    height = 20
+    color = pygame.Color(196, 207, 214)
+    transparent = pygame.Color(1,2,3)
+
+    background = (109, 109, 109)
+    foreground = (0, 0, 0)
+
+
+    def __init__(self):
+        self.blank = True
+        self.packer = GridPacker()
+        self.elements = []
+        self.rect = None
+
+
+    def setPacker(self, packer):
+        self.packer = packer
+
+
+    def addElement(self, other):
+        self.elements.append(other)
+        self.packer.add(other)
+
+
+    def buildInterface(self, rect):
+        """
+        pass the rect of the screen surface and the interface will be
+        proportioned correctly.
+        """
+
+        self.msgFont = pygame.font.Font((res.fontPath("volter.ttf")), 9)
+        self.border = gui.GraphicBox("dialog2-h.png", hollow=True)
+        self.borderFilled = gui.GraphicBox("dialog2.png")
+        self.paneManager = None
+
+        x, y, w, h = rect
+        w = x+int((w*.30))
+        s = pygame.Surface((w, self.height))
+        s.fill(self.transparent)
+        s.set_colorkey(self.transparent, pygame.RLEACCEL)
+
+        pygame.draw.circle(s, (128,128,128), (self.height, 1), self.height)
+        pygame.draw.rect(s, (128, 128, 128), (self.height, 1, w, self.height))
+
+        pygame.draw.circle(s, self.color, (self.height+1, 0), self.height)
+        pygame.draw.rect(s, self.color, (self.height+1, 0, w-self.height, self.height))
         
+        self.buttonbar = s
 
-    def findViewport(self, point):
-        for vp in self.panes:
-            if vp.rect.collidepoint(point):
-                return vp
+
+    def draw(self, surface):
+        """
+        when asking clients to draw(), you must call _draw().  the client will
+        then automatically adjust to changes in screen size or position, then
+        call the draw() method on its own.
+        """
+
+        surface_rect = surface.get_rect()
+
+        for e, rect in self.packer.getLayout(surface_rect):
+            e.draw(surface, rect)
+
+        x, y, w, h = surface_rect
+        back_width = x+int((w*.70))
+        self.buildInterface((x, y, w, h))
+        surface.blit(self.buttonbar, (x+int(w*.70)+1,0))
 
 
     def handle_commandlist(self, cmdlist):
-        for cls, cmd, arg in cmdlist:
-            if cmd == CLICK1:
-                state, pos = arg
-                vp = self.findViewport(pos)
-                if vp:
-                    pos = (pos[0] - vp.rect.left, pos[1] - vp.rect.top)
-                    if state == BUTTONDOWN:
-                        self.drag_start = pos
-                        self.drag_vp = vp
-                        self.mouse_tool.onClick(vp, pos, 1)
-
-                    elif state == BUTTONHELD:
-                        if vp == self.drag_vp:
-                            self.mouse_tool.onDrag(vp, pos, 1, self.drag_start)
-
-            elif cmd == CLICK2:
-                pass
-            elif cmd == MOUSEPOS:
-                vp = self.findViewport(arg)
-                if vp:
-                    pos = (arg[0] - vp.rect.left, arg[1] - vp.rect.top)
-                    self.mouse_tool.onHover(vp, pos)
+        for e in self.elements:
+            e.handle_commandlist(cmdlist)
 
 
-class ViewPort(Pane):
+    def update(self, time):
+        [ i.update(time) for i in self.elements ]
+
+
+def testMenu():
+    def func():
+        pass
+
+    g = GraphicIcon("grasp.png", func) 
+    m = RoundMenu([g, g, g, g])
+    return m
+
+
+
+class ViewPort(UIElement):
     """
-    View is the view of one specific game entity
+    the ViewPort is a Pane that draws a area to the screen (or other
+    surface)
     """
 
-    def __init__(self, area, follow):
-        self.background = (109, 109, 109)
-        self.foreground = (0, 0, 0)
+    def __init__(self, area, parent=None):
+        UIElement.__init__(self, parent)
         self.area = area
-        self.follow = follow
-        self.blank = True
-        self.rect = None
         self.camera = None
 
+    def onResize(self, rect):
+        self.camera = LevelCamera(self.area, rect)
 
-    def setRect(self, rect):
-        self.rect = rect
-        self.blank = True    # causes the camera to be reinitialized in draw()
-
-
-    def draw(self, surface, rect):
-        self.rect = rect
-
-        if self.blank:
-            self.blank = False
-            x, y, w, h = rect
-            self.camera = LevelCamera(self.area, (0, 0, w, h))
-            self.camera.draw(surface, rect)
-            return self.rect
-            
-        else:
-            return self.camera.draw(surface, rect)
-
+    def onDraw(self, surface, rect):
+        return self.camera.draw(surface, rect)
 
     def update(self, time):
         self.camera.update(time)
 
+
+class ViewPortManager(UIElement):
+    drag_sensitivity = 2
+
+
+    def __init__(self, parent):
+        UIElement.__init__(self, parent)
+        self.elements = []
+        self.areas = []
+        self.packer = GridPacker()
+
+        self.tools = [ PanTool(self) ]
+
+        for tool in self.tools:
+            tool.load()
+
+        self.mouse_tool = self.tools[0]
+
+        #mouse hack
+        self.drag_origin = None
+        self.drag_vp = None
+
+
+    def add(self, element):
+        if isinstance(element, ViewPort):
+            self.packer.add(element)
+
+            if element.area not in self.areas:
+                self.areas.append(element.area)
+                element.area.load()
+
+                # load the children
+                for child in element.area.getChildren():
+                    child.load()
+
+                # load sounds from area
+                for filename in element.area.soundFiles:
+                    SoundMan.loadSound(filename)
+
+
+    def onDraw(self, surface, rect):
+        dirty = []
+        for element, rect in self.packer.getLayout(rect):
+            dirty.extend(element.draw(surface, rect))
+
+        #for rect in self.packer.getRects():
+        #    self.border.draw(surface, rect.inflate(6,6))
+
+        return dirty
+
+
+    def update(self, time):
+        [ vp.update(time) for vp in self.elements ]
+        [ area.update(time) for area in self.areas ]
+        
+
+    def findViewport(self, point):
+        for element, rect in self.packer.getLayout(self._rect):
+            if rect.collidepoint(point):
+                return element, rect
+
+
+    # handles all mouse interaction
+    def handle_commandlist(self, cmdlist):
+        for cls, cmd, arg in cmdlist:
+            if cmd == CLICK1:
+                state, pos = arg
+                vp, rect = self.findViewport(pos)
+                if vp:
+                    pos = Vec2d(pos[0] - rect.left, pos[1] - rect.top)
+                    if state == BUTTONDOWN:
+                        self.drag_origin = pos
+                        self.drag_vp = vp
+                        self.mouse_tool.onClick(vp, pos, 1)
+
+                    elif state == BUTTONHELD:
+                        d = abs(sum(pos - self.drag_origin))
+                        if vp == self.drag_vp and d > self.drag_sensitivity:
+                            self.mouse_tool.onDrag(vp, pos, 1, self.drag_origin)
+
+            elif cmd == CLICK2:
+                pass
+            elif cmd == MOUSEPOS:
+                vp, rect = self.findViewport(arg)
+                if vp:
+                    pos = (arg[0] - rect.left, arg[1] - rect.top)
+                    self.mouse_tool.onHover(vp, pos)
+
+
+
+
+
+
+"""============================================================================`
+"""
 
 class LevelState(GameState):
     """
     This state is where the player will move the hero around the map
     interacting with npcs, other players, objects, etc.
 
-    Expects to load a specially formatted TMX map created with Tiled.
-    Layers:
-        Control Tiles
-        Upper Partial Tiles
-        Lower Partial Tiles
-        Lower Full Tiles
-
-    The control layer is where objects and boundries are placed.  It will not
-    be rendered.  Your map must not have any spaces that are open.  Each space
-    must have a tile in it.  Blank spaces will not be rendered properly and
-    will leave annoying trails on the map.
-
-    The control layer must be created with the utility included with lib2d.  It
-    contains metadata that lib2d can use to layout and position objects
-    correctly.
-
+    much of the work doen here is in the Standard UI class.
     """
 
     def __init__(self, area, startPosition=None):
         GameState.__init__(self)
         self.area = area
-        global state
-        state = self
 
 
     def activate(self):
-        global hero_body
-
-        self.blank = True
-        self.background = (109, 109, 109)
-        self.foreground = (0, 0, 0)
-
-        self.msgFont = pygame.font.Font((res.fontPath("volter.ttf")), 9)
-        self.border = gui.GraphicBox("dialog2-h.png", hollow=True)
-        self.borderFilled = gui.GraphicBox("dialog2.png")
-        self.vpmanager = None
-
-        # get the root and the hero from it
-        root = self.area.getRoot()
-        self.hero = root.getChildByGUID(1)
-        self.hero.move_speed = 16
-
-        # add the hero to this map if it isn't ready there
-        if not self.area.hasChild(self.hero):
-            self.area.add(self.hero)
-
-        hero_body = self.area.getBody(self.hero)
-
-        self.reactivate()
-
-
-    def deactivate(self):
-        res.fadeoutMusic(1000)
-
-        # unload the children
-        for child in self.area.getChildren():
-            child.unload()
-
-        # unload sounds
-        SoundMan.unload()   
-
- 
-    def reactivate(self):
-        pygame.mouse.set_visible(True)
-
-
-    def buildViewports(self, surface):
-        self.vpmanager = PaneManager(surface.get_rect())
-        self.vpmanager.new(self.area, self.hero)
-        self.vpmanager.new(self.area, self.hero)
-        self.vpmanager.new(self.area, self.hero)
-        self.vpmanager.new(self.area, self.hero)
+        self.ui = StandardUI()
+        vpm = ViewPortManager(self.ui)
+        vpm.add(ViewPort(self.area))
+        vpm.add(ViewPort(self.area))
+        self.ui.addElement(vpm)
 
 
     def draw(self, surface):
-        if self.blank:
-            self.blank = False
-            self.buildViewports(surface)
-
-        self.vpmanager.draw(surface)
-
-        for rect in self.vpmanager.getRects():
-            self.border.draw(surface, rect.inflate(6,6))
+        self.ui.draw(surface)
 
 
     def update(self, time):
-        if self.blank: return
-        self.vpmanager.update(time)
+        self.ui.update(time)
 
 
     def handle_commandlist(self, cmdlist):
-        if self.blank: return
-        self.vpmanager.handle_commandlist(cmdlist)
+        self.ui.handle_commandlist(cmdlist)
 
 
 @receiver(emitText)
@@ -393,9 +598,6 @@ def bodyMove(sender, **kwargs):
 
     if state == None:
         return
-
-    if body == state.hero:
-        state.camera.center(position)
 
 
 @receiver(bodyWarp)
