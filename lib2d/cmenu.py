@@ -200,7 +200,7 @@ class cMenu(object):
             new_option = MenuOption(label, callback, image)
             self.options[s] = new_option
 
-            if not self.callback == None:
+            if self.callback is not None:
                 self.callback(s)
 
             self.selection = s

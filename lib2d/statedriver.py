@@ -120,7 +120,7 @@ class StateDriver(object):
         if isinstance(state, StatePlaceholder):
             self.replace(state.klass())
            
-        elif not state == None:
+        elif state is not None:
             if state.activated:
                 state.reactivate()
             else:

@@ -85,13 +85,13 @@ class Cursor(object):
         if self.enabled:
             if self.do_flip:
                 self.image = flip(self.image, True, False)
-                if not self.shadow == None:
+                if self.shadow is not None:
                     self.shadow = flip(self.shadow, True, False)
                 self.do_flip = False
 
             pos=[self.old_pos[0]-self.offset[0],self.old_pos[1]-self.offset[1]]
 
-            if not self.shadow == None:
+            if self.shadow is not None:
                 surface.blit(self.shadow,(pos[0]+2, pos[1]+2))
             surface.blit(self.image,pos)
 

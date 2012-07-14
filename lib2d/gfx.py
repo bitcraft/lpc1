@@ -84,7 +84,7 @@ def set_screen(dim, scale=1, transform=None):
     if transform == "scale2x" or transform == "scale":
         set_scale(scale, transform)
 
-    elif transform == None:
+    elif transform is None:
         pixelize = False
         pixel_buffer = None
         pix_scale = 1

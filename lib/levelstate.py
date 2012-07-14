@@ -243,7 +243,7 @@ class GraphicIcon(UIElement):
 
 
     def load(self):
-        if self.image == None:
+        if self.image is None:
             self.image = res.loadImage(self.filename)
             self.enabled = True
 
@@ -318,7 +318,7 @@ class PanTool(MouseTool, UIElement):
 
     def onDrag(self, pane, point, button, origin):
         if isinstance(pane, ViewPort):
-            if self.drag_origin == None:
+            if self.drag_origin is None:
                 x, y = pane._rect.width / 2, pane._rect.height / 2
                 self.drag_origin = pane.camera.surfaceToWorld((x, y))
 
@@ -493,7 +493,7 @@ class ViewPortManager(UIElement):
 
 
     def findViewport(self, point):
-        if point == None: return
+        if point is None: return
         for element, rect in self.packer.getLayout(self._rect):
             if rect.collidepoint(point):
                 return element, rect
@@ -504,7 +504,7 @@ class ViewPortManager(UIElement):
         for cls, cmd, arg in cmdlist:
             if cmd == CLICK1:
                 state, pos = arg
-                if pos == None: return
+                if pos is None: return
                 vp, rect = self.findViewport(pos)
                 if vp:
                     pos = Vec2d(pos[0] - rect.left, pos[1] - rect.top)
@@ -588,7 +588,7 @@ def bodyMove(sender, **kwargs):
     position = kwargs['position']
     state = kwargs['caller']
 
-    if state == None:
+    if state is None:
         return
 
 
@@ -599,7 +599,7 @@ def bodyWarp(sender, **kwargs):
     destination = kwargs['destination']
     state = kwargs['caller']
 
-    if state == None:
+    if state is None:
         return
 
     if body == state.hero:

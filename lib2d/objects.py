@@ -82,21 +82,21 @@ class GameObject(object):
 
     def getPosition(self, what=None):
         # override this for objects that can contain other types
-        if what == None: what = self._parent
+        if what is None: what = self._parent
         return self._parent.getPosition(what)
-        #if what == None: what = self
+        #if what is None: what = self
         #return self._parent.getPosition(what)
 
 
     def getOrientation(self, what=None):
         # override this for objects that can contain other types
-        if what == None: what = self._parent
+        if what is None: what = self._parent
         return self._parent.getOrientation(what)
 
 
     def getSize(self, what=None):
         # override this for objects that can contain other types
-        if what == None: what = self._parent
+        if what is None: what = self._parent
         return self._parent.getSize(what)
         
 
@@ -171,7 +171,7 @@ class GameObject(object):
 
     def getRoot(self):
         node = self
-        while not node._parent == None:
+        while node._parent is not None:
             node = node._parent
         return node
 

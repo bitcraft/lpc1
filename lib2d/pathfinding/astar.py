@@ -35,7 +35,7 @@ def dist(start, finish):
 def calcG(node):
     score=0
     score += node.g
-    while not node.parent == None:
+    while node.parent is not None:
         node = node.parent
         score += node.g
     return score
@@ -75,7 +75,7 @@ def search(start, finish, factory):
     while openlist:
         try:
             f, keyNode = heappop(openlist)
-            while keyNode == None:
+            while keyNode is None:
                 f, keyNode = heappop(openlist)
         except IndexError:
             break
@@ -84,7 +84,7 @@ def search(start, finish, factory):
 
         if keyNode == finishNode:
             path = [(keyNode.x, keyNode.y)]
-            while not keyNode.parent == None:
+            while keyNode.parent is not None:
                 keyNode = keyNode.parent
                 path.append((keyNode.x, keyNode.y))
             return path

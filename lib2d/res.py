@@ -59,7 +59,7 @@ def setResourcePath(path):
 def defaultFont():
     global _defaultFont
 
-    if _defaultFont == None:
+    if _defaultFont is None:
         _defaultFont = pygame.font.get_default_font()
 
     return _defaultFont

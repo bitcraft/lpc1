@@ -347,7 +347,7 @@ class Area(AbstractArea, AdventureMixin):
 
 
     def add(self, thing, pos=None):
-        if pos == None:
+        if pos is None:
             pos = self.defaultPosition().origin
 
         body = Body(BBox(pos, thing.size), Vec2d(0,0), Vec2d(0,0), 0.0, \
@@ -459,7 +459,7 @@ class Area(AbstractArea, AdventureMixin):
             pass
 
         else:
-            if not prop == None:
+            if prop is not None:
                 name = prop.get('walkSound', False)
                 if name:
                     self.emitSound(name, newbbox.bottomcenter, ttl=600)
@@ -477,7 +477,7 @@ class Area(AbstractArea, AdventureMixin):
 
             # get the position and guid of the exit tile of the other map
             fromExit, guid = self.exits[exit.value]
-            if not guid == None: 
+            if guid is not None: 
                 # used to correctly align sprites
                 fromTileBBox = BBox(fromExit, (16,16,1))
                 tx, ty, tz = fromTileBBox.origin

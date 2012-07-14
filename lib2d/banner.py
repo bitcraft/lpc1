@@ -30,7 +30,7 @@ simple functions wrap pygame's font module
 
 
 def loadFont(font, size):
-    if font == None:
+    if font is None:
         return pygame.font.Font(res.defaultFont(), size)
             
     elif isinstance(font, str):
@@ -48,7 +48,7 @@ def TextBanner(text, font_name=None, size=12, color=[0,0,0], alpha=False, backgr
 
         if alpha == True:
             return font.render(text, True, color).convert_alpha()
-        elif background == None:
+        elif background is None:
             return font.render(text, False, color).convert()
         else:
             image = font.render(text, True, color, bkg).convert()

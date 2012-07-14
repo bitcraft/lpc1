@@ -236,7 +236,7 @@ class BufferedTilemapRenderer(GameObject):
         override if you want a different type of queue
         """
 
-        if self.queue == None:
+        if self.queue is None:
             self.queue = iter([])
 
 

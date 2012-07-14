@@ -71,7 +71,7 @@ class KeyboardPlayerInput(PlayerInput):
     
     def __init__(self, keymap=None):
 
-        if keymap == None:
+        if keymap is None:
             self.keymap = KeyboardPlayerInput.default_p1
         self.rev_keymap = dict((v,k) for k, v in self.keymap.iteritems())
         self.held = []
@@ -207,7 +207,7 @@ class JoystickPlayerInput(PlayerInput):
         self.js.init()
         self.deadzone = float(0.12)
         
-        if keymap == None:
+        if keymap is None:
             self.keymap = JoystickPlayerInput.default_p1
         
     def getCommand(self, event):

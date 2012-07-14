@@ -84,7 +84,7 @@ def drawText(surface, text, color, rect, font=None, aa=False, bkg=None):
     maxWidth = 0
     maxHeight = 0
 
-    if font == None:
+    if font is None:
         fullpath = pygame.font.get_default_font()
         font = pygame.font.Font(fullpath, 12)
 

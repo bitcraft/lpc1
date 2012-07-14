@@ -84,7 +84,7 @@ class Animation(GameObject):
         returns a new Animation Object
         """
 
-        if not self.images == None and not force:
+        if (self.images is not None) and (not force):
             return
 
         image = res.loadImage(self.filename, 0, 0, 1)

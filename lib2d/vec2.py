@@ -14,7 +14,7 @@ class Vec2d(object):
     __slots__ = ['_x', '_y']
  
     def __init__(self, x_or_pair, y = None):
-        if y == None:
+        if y is None:
             self._x, self._y  = x_or_pair
         else:
             self._x = x_or_pair
