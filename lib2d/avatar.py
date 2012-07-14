@@ -61,7 +61,6 @@ class Avatar(GameObject):
         self.flip       = 0
         self.ttl = 0
         self._prevAngle = None
-        self._prevFrame = None
         self._rect = None
 
         for animation in animations:
@@ -69,28 +68,14 @@ class Avatar(GameObject):
             self.animations[animation.name] = animation
 
         self.setDefault(animations[0])
-
+        self.play()
 
     def _updateCache(self):
         angle = self.getOrientation()
 
-        if self.curAnimation == None:
-            self.play(self.default)
-
-        if not angle == self._prevAngle:
-            self.curImage = self.curAnimation.getImage(self.curFrame, angle)
-            self._rect = self.curImage.get_rect()
-            if self.flip: self.curImage = flip(self.curImage, 1, 0)
-
-        elif not self.curFrame == self._prevFrame:
-            self.curImage = self.curAnimation.getImage(self.curFrame, angle) 
-            self._rect = self.curImage.get_rect()
-            if self.flip: self.curImage = flip(self.curImage, 1, 0)
-
-        elif self.curImage == None:
-            self.curImage = self.curAnimation.getImage(self.curFrame, angle) 
-            self._rect = self.curImage.get_rect()
-            if self.flip: self.curImage = flip(self.curImage, 1, 0)
+        self.curImage = self.curAnimation.getImage(self.curFrame, angle) 
+        self._rect = self.curImage.get_rect()
+        if self.flip: self.curImage = flip(self.curImage, 1, 0)
 
 
     def get_rect(self):
@@ -145,7 +130,6 @@ class Avatar(GameObject):
             self.timer -= self.ttl
 
             self.ttl, self.curFrame = self.curAnimation.advance()
-            print self.ttl, self.curFrame
 
             
     def stop(self):
@@ -172,15 +156,6 @@ class Avatar(GameObject):
         self.play(self.default)
 
 
-    def setFrame(self, frame):
-        """
-        set the frame of the animation
-        frame should be 0-indexed number of frame to show
-        """
-        self._prevFrame = frame
-        self.curFrame = frame
-        
-
     def isPlaying(self, name):
         if isinstance(name, animation.Animation):
             if name == self.curAnimation: return True
@@ -195,6 +170,8 @@ class Avatar(GameObject):
         if isinstance(name, animation.Animation):
             if name == self.curAnimation: return
             self.curAnimation = name
+        elif name is None:
+            name = self.default
         else:
             temp = self.getAnimation(name)
             if temp == self.curAnimation: return
