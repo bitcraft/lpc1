@@ -1,11 +1,9 @@
 from lib2d.area import AbstractArea, Area
 from lib2d.buildarea import fromTMX
-from lib2d.avatar import Avatar, Animation, StaticAnimation
+from lib2d.avatar import Avatar
+from lib2d.animation import Animation, StaticAnimation
 from lib2d.objects import AvatarObject
-from lib.hero import Hero
 from lib.level import Level
-from lib.enemies import *
-from lib.misc import *
 from lib2d import res
 
 from collections import defaultdict, deque
@@ -92,15 +90,11 @@ def build():
 
 
     # some characters
-    avatar = Avatar()
-    ani = Animation("warrior-male-stand.png", "stand", 1, 4)
-    avatar.add(ani)
-    ani = Animation("warrior-male-walk.png", "walk", [0,1,2,1], 4)
-    avatar.add(ani)
-    ani = Animation("warrior-male-attack.png", "attack", 4, 4, 60)
-    avatar.add(ani)
-    avatar.play("walk")
-    npc = Hero()
+    ani0 = Animation("warrior-male-stand.png", "stand", 1, 4)
+    ani1 = Animation("warrior-male-walk.png", "walk", [0,1,2,1], 4, 200)
+    ani2 = Animation("warrior-male-attack.png", "attack", 4, 4, 60)
+    avatar = Avatar((ani0, ani1, ani2))
+    npc = AvatarObject()
     npc.setName("Rat")
     npc.setAvatar(avatar)
     npc.setGUID(1)

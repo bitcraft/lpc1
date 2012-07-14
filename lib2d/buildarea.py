@@ -4,7 +4,6 @@ from lib2d.bbox import BBox
 from lib2d import res
 from pygame import Rect
 
-from lib.misc import *
 
 
 def fromTMX(parent, mapname):

@@ -20,6 +20,7 @@ along with lib2d.  If not, see <http://www.gnu.org/licenses/>.
 
 import gfx
 import pygame
+from lib2d.objects import GameObject
 from playerinput import KeyboardPlayerInput, MousePlayerInput
 from collections import deque
 from itertools import cycle, islice
@@ -105,11 +106,6 @@ class StateDriver(object):
         """
 
         self._screen = self.parent.get_screen()
-
-
-    def set_parent(self, parent):
-        self.parent = parent
-        self.reload_screen()
 
 
     def done(self):
@@ -282,50 +278,38 @@ class StateDriver(object):
                 dirty = currentState.draw(self._screen)
                 gfx.update_display(dirty)
 
+                # looks awkward?  because it is.  forcibly give small updates
+                # to each object so we don't draw too often.
                 time = target_fps / 10.0
 
-                currentState.update(time)
+                [ o.update(time) for o in GameObject.population ]
+                currentState = current_state()
+                if not currentState == originalState: continue
+                [ o.update(time) for o in GameObject.population ]
+                currentState = current_state()
+                if not currentState == originalState: continue
+                [ o.update(time) for o in GameObject.population ]
+                currentState = current_state()
+                if not currentState == originalState: continue
+                [ o.update(time) for o in GameObject.population ]
+                currentState = current_state()
+                if not currentState == originalState: continue
+                [ o.update(time) for o in GameObject.population ]
+                currentState = current_state()
+                if not currentState == originalState: continue
+                [ o.update(time) for o in GameObject.population ]
+                currentState = current_state()
+                if not currentState == originalState: continue
+                [ o.update(time) for o in GameObject.population ]
+                currentState = current_state()
+                if not currentState == originalState: continue
+                [ o.update(time) for o in GameObject.population ]
+                currentState = current_state()
+                if not currentState == originalState: continue
+                [ o.update(time) for o in GameObject.population ]
+                currentState = current_state()
+                if not currentState == originalState: continue
+                [ o.update(time) for o in GameObject.population ]
                 currentState = current_state()
                 if not currentState == originalState: continue
 
-                currentState.update(time)
-                currentState = current_state()
-                if not currentState == originalState: continue
-
-                originalState.update(time)
-                currentState = current_state()
-                if not currentState == originalState: continue
-
-                currentState.update(time)
-                currentState = current_state()
-                if not currentState == originalState: continue
-
-                currentState.update(time)
-                currentState = current_state()
-                if not currentState == originalState: continue
-
-                currentState.update(time)
-                currentState = current_state()
-                if not currentState == originalState: continue
-
-                originalState.update(time)
-                currentState = current_state()
-                if not currentState == originalState: continue
-
-                currentState.update(time)
-                currentState = current_state()
-                if not currentState == originalState: continue
-
-                currentState.update(time)
-                currentState = current_state()
-                if not currentState == originalState: continue
-
-                currentState.update(time)
-                currentState = current_state()
-                if not currentState == originalState: continue
-
-
-
-# singleton type object
-# use this instead of instancing your own State Driver.
-driver = StateDriver()

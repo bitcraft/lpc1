@@ -227,9 +227,6 @@ class ChoiceDialog(GameState):
             if (cmd == P1_ACTION1) and arg:
                 sd.done()   
 
-    def update(self, time):
-        pass
-
     def choice0(self): pass
     def choice1(self): pass
     def choice2(self): pass

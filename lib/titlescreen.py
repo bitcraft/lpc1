@@ -3,29 +3,10 @@ from lib import world
 
 from lib2d.gamestate import GameState
 from lib2d.cmenu import cMenu
-from lib2d.statedriver import driver as sd
 from lib2d.objects import loadObject
 from lib2d import res, gui
 
 import pygame, os
-
-
-hints = """You must defeat the evil scientist in the lower levels!
-
-
-You arrive unarmed.  Use your cunning to defeat him!
-Q - Use items
-W - Jump
-E - Grab items
-
-
-When grabbing things, hold the key and you can push or pull them.
-Use Q to activate terminals, search items, press buttons, or open doors.
-The orange buttons near an elevator will call it to your level.
-
-
-Good luck, Agent!"""
-
 
 
 class InstructionScreen(GameState):
@@ -51,7 +32,7 @@ class InstructionScreen(GameState):
 
     def handle_event(self, event):
         if event.type == pygame.locals.KEYDOWN:
-            sd.done()
+            self.parent.done()
 
 
 class TitleScreen(GameState):
@@ -63,21 +44,17 @@ class TitleScreen(GameState):
         self.counter = 0
         self.game = None
         self.activated = True
-        #self.reactivate()
+        self.reactivate()
 
-        self.new_game()
+        #self.new_game()
 
     def deactivate(self):
         GameState.deactivate(self)
 
 
     def reactivate(self):
-        sd.done()
-        return
-
         if self.game:
-            self.menu = cMenu(((32,20), sd.get_size()),
-                20, -5, 'vertical', 100,
+            self.menu = cMenu(20, -5, 'vertical', 100,
                 [('New Game', self.new_game),
                 ('Continue', self.continue_game),
                 #('Save', self.save_game),
@@ -86,15 +63,13 @@ class TitleScreen(GameState):
                 ('Quit', self.quit_game)],
                 font="visitor1.ttf", font_size=20)
         else:
-            self.menu = cMenu(((32,20), sd.get_size()),
-                20, -5, 'vertical', 100,
+            self.menu = cMenu(20, -5, 'vertical', 100,
                 [('New Game', self.new_game),
                 #('Continue', self.load_game),
                 ('Introduction', self.show_intro),
                 ('Quit', self.quit_game)],
                 font="visitor1.ttf", font_size=20)
 
-        self.menu.ready()
         self.redraw = True
         #res.playMusic("oneslymove.ogg")
 
@@ -111,14 +86,14 @@ class TitleScreen(GameState):
             else:
                 self.borderFilled.draw(surface, ((0,0), surface.get_size()))
 
-        self.menu.draw(surface)
+        self.menu.draw(surface, pygame.Rect((32, 32,1,1)))
 
 
     def new_game(self):
         res.fadeoutMusic(1000)
         self.game = world.build()
         level = self.game.getChildByGUID(5001)
-        sd.start(LevelState(level))
+        self.parent.start(LevelState(self.parent, level))
 
 
     def save_game(self):
@@ -136,17 +111,17 @@ class TitleScreen(GameState):
             return self.new_game()
 
         level = self.game.getChildByGUID(5001)
-        sd.start(LevelState(level))
+        self.parent.start(LevelState(level))
 
 
     def continue_game(self):
         res.fadeoutMusic(1000)
         level = self.game.getChildByGUID(5001)
-        sd.start(LevelState(level))
+        self.parent.start(LevelState(level))
 
 
     def show_intro(self):
-        sd.start_restart(InstructionScreen())
+        self.parent.start_restart(InstructionScreen())
 
 
     def savequit_game(self):
@@ -158,5 +133,5 @@ class TitleScreen(GameState):
 
 
     def quit_game(self):
-        sd.done() 
+        self.parent.done() 
 

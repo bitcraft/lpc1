@@ -4,6 +4,7 @@ rewrite of the tilmap engine for lib2d.
 this time has tiled TMX maps built in and required
 """
 
+from objects import GameObject
 import pygame
 from itertools import product, chain, ifilter
 from pytmx import tmxloader
@@ -17,7 +18,7 @@ def generateDefaultImage(size):
     return i
 
 
-class BufferedTilemapRenderer(object):
+class BufferedTilemapRenderer(GameObject):
     """
     Class to render a map onto a buffer that is suitable for blitting onto
     the screen as one surface, rather than a collection of tiles.
@@ -37,7 +38,11 @@ class BufferedTilemapRenderer(object):
     will blit any tiles needed to the offscreen buffer.
     """
 
+    time_update = True
+
     def __init__(self, tmx, size, **kwargs):
+        GameObject.__init__(self)
+
         self.default_image = generateDefaultImage((tmx.tilewidth,
                                                    tmx.tileheight))
         self.tmx = tmx

@@ -270,7 +270,6 @@ class Area(AbstractArea, AdventureMixin):
     NOTE: some of the code is specific for maps from the tmxloader
     """
 
-
     def defaultPosition(self):
         return BBox(0,0,0,1,1,1)
 
@@ -305,6 +304,7 @@ class Area(AbstractArea, AdventureMixin):
         self.inUpdate = False
         self._removeQueue = []
 
+        print "new area"
 
     def flash(self, position):
         self.flashes.append(position)
@@ -312,6 +312,8 @@ class Area(AbstractArea, AdventureMixin):
 
     def load(self):
         import pytmx
+
+        print "area load"
 
         self.tmxdata = pytmx.tmxloader.load_pygame(
                        self.mappath, force_colorkey=(128,128,0))

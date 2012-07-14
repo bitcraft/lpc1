@@ -1,5 +1,5 @@
 from lib2d.tilemap import BufferedTilemapRenderer
-from lib2d.objects import AvatarObject
+from lib2d.objects import AvatarObject, GameObject
 from pygame import Rect, draw
 
 import weakref
@@ -9,10 +9,11 @@ def screenSorter(a):
     return a[-1].x
 
 
-class LevelCamera(object):
+class LevelCamera(GameObject):
     """
     The level camera manages sprites on the screen and a tilemap renderer.
     """
+
 
     def __init__(self, area, extent):
         self.area = area
@@ -62,11 +63,6 @@ class LevelCamera(object):
         self.zoom = 1.0
 
 
-
-    def update(self, time):
-        self.maprender.update(None)
-
-
     def center(self, (x, y, z)):
         """
         center the camera on a world location.
@@ -100,8 +96,6 @@ class LevelCamera(object):
             y = self.map_width / 2
 
 
-
-
     def clear(self, surface):
         raise NotImplementedError
 
@@ -121,9 +115,9 @@ class LevelCamera(object):
             bbox = self.area.getBBox(a)
             x, y, z, d, w, h = bbox
             x, y = self.worldToSurface((x, y, z))
-            xx, yy = a.avatar.axis
-            x += xx
-            y += yy
+            #xx, yy = a.avatar.axis
+            #x += xx
+            #y += yy
             x = x - self.extent.top + rect.top
             y = y - self.extent.left + rect.left
             onScreen.append((a.avatar.image, Rect((x, y), (w, h)), 1, a, bbox))

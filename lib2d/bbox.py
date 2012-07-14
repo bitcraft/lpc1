@@ -15,7 +15,7 @@ def intersect(a, b):
 
 class BBox(object):
     """
-    Rect-like class for defining area in 3d space.
+    Rect-like Immutable class for defining area in 3d space.
 
     Once created cannot be modified.
     Operations that would change the bbox will return a new one.

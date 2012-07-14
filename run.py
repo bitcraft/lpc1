@@ -9,7 +9,7 @@ class TestGame(Game):
         from lib.titlescreen import TitleScreen
         gfx.set_screen((1024, 768), 2, "scale")
         self.sd.reload_screen()
-        self.sd.start(TitleScreen())
+        self.sd.start(TitleScreen(self.sd))
         self.sd.run()
 
 

@@ -1,8 +1,6 @@
 from renderer import LevelCamera
-from misc import Lift
 
 from lib2d.gamestate import GameState
-from lib2d.statedriver import driver as sd
 from lib2d.buttons import *
 from lib2d.signals import *
 #from lib2d.ui import *
@@ -20,6 +18,11 @@ import os.path
 
 import time
 
+
+"""
+FUTURE:
+    Create immutable types when possible to reduce headaches when threading
+"""
 
 debug = 1
 
@@ -131,10 +134,6 @@ class UIElement(object):
         pass
 
 
-    def update(self, time):
-        pass
-
-
 class Packer(UIElement):
     def __init__(self):
         self._rect = None
@@ -227,7 +226,7 @@ class MouseTool(object):
         pass
 
 
-class GraphicIcon(object):
+class GraphicIcon(UIElement):
     """
     Clickable Icon
 
@@ -235,6 +234,7 @@ class GraphicIcon(object):
     """
 
     def __init__(self, filename, func, arg=[], kwarg={}, uses=1):
+        UIElement.__init__(self)
         self.filename = filename
         self.func = (func, arg, kwarg)
         self.uses = uses
@@ -275,7 +275,8 @@ class RoundMenu(UIElement):
     """
 
     def __init__(self, items):
-        self.items = []
+        UIElement.__init__(self)
+        self.items = items
         for i in items:
             i.load()
             i.enabled = False
@@ -286,13 +287,14 @@ class RoundMenu(UIElement):
         self.enabled = True
         for i in self.items:
             i.enabled = False
-    
+   
+ 
     def onDraw(self, surface, rect):
         dirty = []
         for i, item in enumerate(self.items):
             x = i*32
             y = 10
-            dirty.append(item.draw(surface, (x,y)))
+            dirty.append(item.draw(surface, rect.move((x,y))))
         return dirty
 
 
@@ -310,8 +312,7 @@ class PanTool(MouseTool, UIElement):
     def onClick(self, pane, point, button):
         self.drag_origin = None
         m = testMenu()
-        #self.getUI().addElement(m)
-        #self.getUI().setRect(m, (pos, (32, 32)))
+        pane.addElement(m, (100,100,100,100))
         m.open()
 
 
@@ -383,12 +384,6 @@ class StandardUI(UserInterface):
 
 
     def draw(self, surface):
-        """
-        when asking clients to draw(), you must call _draw().  the client will
-        then automatically adjust to changes in screen size or position, then
-        call the draw() method on its own.
-        """
-
         surface_rect = surface.get_rect()
 
         for e, rect in self.packer.getLayout(surface_rect):
@@ -405,15 +400,12 @@ class StandardUI(UserInterface):
             e.handle_commandlist(cmdlist)
 
 
-    def update(self, time):
-        [ i.update(time) for i in self.elements ]
-
-
 def testMenu():
     def func():
         pass
 
-    g = GraphicIcon("grasp.png", func) 
+    g = GraphicIcon("grasp.png", func)
+    g.image = pygame.transform.scale(g.image, (32,32))
     m = RoundMenu([g, g, g, g])
     return m
 
@@ -421,23 +413,33 @@ def testMenu():
 
 class ViewPort(UIElement):
     """
-    the ViewPort is a Pane that draws a area to the screen (or other
-    surface)
+    the ViewPort is a Pane that draws an area to the screen (or other surface)
+    
+    Elements can be added to the pane and expect to be loacated in world
+    coordinates (so elements move with the map when scrolled)
     """
 
     def __init__(self, area, parent=None):
         UIElement.__init__(self, parent)
         self.area = area
         self.camera = None
+        self.elements = {}
+
+    def addElement(self, element, rect):
+        x, y, w, h = rect
+        self.elements[element] = pygame.Rect(y, x, h, w)
 
     def onResize(self, rect):
         self.camera = LevelCamera(self.area, rect)
 
     def onDraw(self, surface, rect):
-        return self.camera.draw(surface, rect)
+        dirty = self.camera.draw(surface, rect)
+        for element, rect in self.elements.items():
+            dx, dy = self.camera.extent.topleft
+            x, y, w, h = rect.move(-dx, -dy)
+            dirty.append(element.draw(surface, pygame.Rect(y, x, h, w)))
 
-    def update(self, time):
-        self.camera.update(time)
+        return dirty
 
 
 class ViewPortManager(UIElement):
@@ -462,7 +464,7 @@ class ViewPortManager(UIElement):
         self.drag_vp = None
 
 
-    def add(self, element):
+    def addViewPort(self, element):
         if isinstance(element, ViewPort):
             self.packer.add(element)
 
@@ -490,12 +492,8 @@ class ViewPortManager(UIElement):
         return dirty
 
 
-    def update(self, time):
-        [ vp.update(time) for vp in self.elements ]
-        [ area.update(time) for area in self.areas ]
-        
-
     def findViewport(self, point):
+        if point == None: return
         for element, rect in self.packer.getLayout(self._rect):
             if rect.collidepoint(point):
                 return element, rect
@@ -506,6 +504,7 @@ class ViewPortManager(UIElement):
         for cls, cmd, arg in cmdlist:
             if cmd == CLICK1:
                 state, pos = arg
+                if pos == None: return
                 vp, rect = self.findViewport(pos)
                 if vp:
                     pos = Vec2d(pos[0] - rect.left, pos[1] - rect.top)
@@ -529,9 +528,6 @@ class ViewPortManager(UIElement):
 
 
 
-
-
-
 """============================================================================`
 """
 
@@ -540,28 +536,24 @@ class LevelState(GameState):
     This state is where the player will move the hero around the map
     interacting with npcs, other players, objects, etc.
 
-    much of the work doen here is in the Standard UI class.
+    much of the work done here is in the Standard UI class.
     """
 
-    def __init__(self, area, startPosition=None):
-        GameState.__init__(self)
+    def __init__(self, parent, area, startPosition=None):
+        GameState.__init__(self, parent)
         self.area = area
 
 
     def activate(self):
         self.ui = StandardUI()
         vpm = ViewPortManager(self.ui)
-        vpm.add(ViewPort(self.area))
-        vpm.add(ViewPort(self.area))
+        vpm.addViewPort(ViewPort(self.area))
+        vpm.addViewPort(ViewPort(self.area))
         self.ui.addElement(vpm)
 
 
     def draw(self, surface):
         self.ui.draw(surface)
-
-
-    def update(self, time):
-        self.ui.update(time)
 
 
     def handle_commandlist(self, cmdlist):
@@ -611,7 +603,7 @@ def bodyWarp(sender, **kwargs):
         return
 
     if body == state.hero:
-        sd.push(WorldState(destination))
-        sd.done()
-
+        #sd.push(WorldState(destination))
+        #sd.done()
+        pass
 

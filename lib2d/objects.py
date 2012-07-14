@@ -5,6 +5,7 @@ import pygame, types, os
 
 unsupported = [pygame.Surface, types.MethodType]
 
+
 def loadObject(name):
     """
     read this node from disk
@@ -29,24 +30,23 @@ class GameObject(object):
     difficult to track bugs.
     """
 
+    population = []
     sounds = []
     gravity = True
     pushable = False
+    time_update = False
 
 
     def __init__(self, parent=None):
         self.short_name = str(self.__class__)
-        self.short_desc = ""
-        self.long_desc  = ""
-        self.name       = ""
-        self.weight     = 1
         self.size       = (32, 32, 32)
         self._children  = []
         self._parent    = parent
         self._childrenGUID = []  # children of this object by guid !dont use
         self.guid = None
-        self.isFalling = False
-        self.isAlive = True
+
+        if self.time_update:
+            self.population.append(self)
 
 
     def __repr__(self):
@@ -78,10 +78,6 @@ class GameObject(object):
             new.add(child.copy())
 
         return new 
-
-
-    def update(self, time):
-        pass
 
 
     def getPosition(self, what=None):
@@ -318,6 +314,13 @@ class GameObject(object):
         #    pickler = pickle.Pickler(fh, -1)
         #    pickler.dump(toc)
 
+
+class InteractiveObject(GameObject):
+    """
+    object that exists in the game world
+    excludes things like animations and ui elements which are saved, but
+    don't require things like physics simulation
+    """
 
 class AvatarObject(GameObject):
     def __init__(self):

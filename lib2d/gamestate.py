@@ -25,9 +25,11 @@ class GameState(object):
     of a game.
     """
 
-    def __init__(self):
+    def __init__(self, parent):
         """
-        Called when objest is instanced.
+        Called when object is instanced.
+
+        parent is a ref to the statedriver
 
         Not a good idea to load large objects here since it is possible
         that the state is simply instanced and placed in a queue.
@@ -36,7 +38,7 @@ class GameState(object):
         that is the point when assets will be required.
         """        
 
-
+        self.parent = parent
         self.activated = False
 
 
@@ -89,16 +91,6 @@ class GameState(object):
 
         Better to use handle_command() or handle_commandlist()
         for player input
-        """
-
-        pass
-
-
-    def update(self, time):
-        """
-        Called when state has a chance to process logic
-
-        Time is milliseconds passed since last update
         """
 
         pass
