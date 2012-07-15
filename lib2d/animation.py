@@ -8,7 +8,6 @@ import math, itertools
 pi2 = math.pi * 2
 
 box = namedtuple('Box', 'width height')
-frame = namedtuple('Frame', 'box image')
 
 
 """
@@ -53,25 +52,25 @@ class Animation(GameObject):
         self.name = name
         self.images = None
         self.directions = directions
+        self.frames = frames
+        self.timing = timing
 
         # TODO: some checking to make sure inputs are the correct length
-        if isinstance(frames, int):
-            self.frames = tuple(range(0, frames))
+        if isinstance(self.frames, int):
+            self.frames = tuple(range(0, self.frames))
         else:
-            self.frames = tuple(frames)
+            self.frames = tuple(self.frames)
 
         self.real_frames = len(set(self.frames))
 
-        if isinstance(timing, int):
-            self.timing = tuple([timing] * len(self.frames))
+        if isinstance(self.timing, int):
+            self.timing = tuple([self.timing] * len(self.frames))
         else:
-            self.timing = tuple(timing)
-
-        self.iterator = iter(self)
+            self.timing = tuple(self.timing)
 
 
     def __iter__(self):
-        return itertools.cycle(zip(self.timing, self.frames))
+        return itertools.izip(self.timing, self.frames)
 
 
     def returnNew(self):
@@ -110,11 +109,7 @@ class Animation(GameObject):
         self.images = []
 
 
-    def advance(self):
-        return self.iterator.next()
-
-
-    def getImage(self, number,  direction=0):
+    def getImage(self, number, direction=0):
         """
         return the frame by number with the correct image for the direction
         direction should be expressed in radians

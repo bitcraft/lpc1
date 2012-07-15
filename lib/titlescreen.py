@@ -4,7 +4,7 @@ from lib import world
 from lib2d.gamestate import GameState
 from lib2d.cmenu import cMenu
 from lib2d.objects import loadObject
-from lib2d import res, gui
+from lib2d import res, draw
 
 import pygame, os
 
@@ -13,8 +13,8 @@ class InstructionScreen(GameState):
     def activate(self):
         self.foreground = (0,0,0)
         self.background = (109, 109, 109)
-        self.border = gui.GraphicBox("dialog2-h.png", hollow=True)
-        self.borderFilled = gui.GraphicBox("dialog2.png")
+        self.border = draw.GraphicBox("dialog2-h.png", hollow=True)
+        self.borderFilled = draw.GraphicBox("dialog2.png")
         self.msgFont = pygame.font.Font((res.fontPath("volter.ttf")), 9)
         self.activated = True
         self.redraw = True
@@ -24,10 +24,11 @@ class InstructionScreen(GameState):
         if self.redraw:
             sw, sh = surface.get_size()
             self.redraw = False
-            self.borderFilled.draw(surface, ((0,0), (sw, sh)))
+            self.borderFilled.draw(surface, surface.get_rect().inflate(6,6))
             rect = pygame.Rect((sw*.05, sh*.05, sw*.90, sh*.90))
-            gui.drawText(surface, hints, (128, 129, 129), rect.move(1,1), self.msgFont)
-            gui.drawText(surface, hints, self.foreground, rect, self.msgFont)
+            draw.drawText(surface, hints, (128, 129, 129),
+                          rect.move(1,1), self.msgFont)
+            draw.drawText(surface, hints, self.foreground, rect, self.msgFont)
 
 
     def handle_event(self, event):
@@ -39,14 +40,14 @@ class TitleScreen(GameState):
 
     def activate(self):
         self.background = (109, 109, 109)
-        self.border = gui.GraphicBox("dialog2-h.png", hollow=True)
-        self.borderFilled = gui.GraphicBox("dialog2.png")
+        self.border = draw.GraphicBox("dialog2-h.png", hollow=True)
+        self.borderFilled = draw.GraphicBox("dialog2.png")
         self.counter = 0
         self.game = None
         self.activated = True
-        self.reactivate()
+        #self.reactivate()
 
-        #self.new_game()
+        self.new_game()
 
     def deactivate(self):
         GameState.deactivate(self)
@@ -82,10 +83,10 @@ class TitleScreen(GameState):
         if self.redraw:
             self.redraw = False
             if self.game:
-                self.border.draw(surface, ((0,0), surface.get_size()))
+                self.border.draw(surface, surface.get_rect().inflate(5,5))
             else:
-                self.borderFilled.draw(surface, ((0,0), surface.get_size()))
 
+                self.borderFilled.draw(surface, surface.get_rect().inflate(5,5))
         self.menu.draw(surface, pygame.Rect((32, 32,1,1)))
 
 

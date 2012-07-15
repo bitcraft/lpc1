@@ -2,7 +2,6 @@ import res
 import pygame, types, os
 
 
-
 unsupported = [pygame.Surface, types.MethodType]
 
 
@@ -323,60 +322,19 @@ class InteractiveObject(GameObject):
     """
 
 class AvatarObject(GameObject):
-    def __init__(self):
+    def __init__(self, avatar):
+        from avatar import Avatar
+
         GameObject.__init__(self)
-        self._avatar = None
-        self.inventory = []
 
-
-    # hack
-    def addThing(self, thing):
-        self.inventory.append(thing)
-        self.add(thing)
-
-
-    # also a hack
-    def removeThing(self, thing):
-        self.inventory.remove(thing)
-        self.remove(thing)
-
-
-    def fallDamage(self, dmg):
-        pass
-
-
-    def add(self, other):
-        from avatar import Avatar
-        GameObject.add(self, other)
-        if isinstance(other, Avatar):
-            self._avatar = other
-
-
-    def remove(self, other):
-        from avatar import Avatar
-        GameObject.remove(self, other)
-        if isinstance(other, Avatar):
-            self._avatar = None
+        if isinstance(avatar, Avatar):
+            self.add(avatar)
+            self._avatar = avatar
 
 
     @property    
     def avatar(self):
         return self._avatar
-
-
-    @avatar.setter
-    def avatar(self, avatar):
-        self._avatar = avatar
-        self.add(avatar)
-
-
-    def setAvatar(self, avatar):
-        self._avatar = avatar
-        self.add(avatar)
-
-    
-    def stop(self):
-        pass
 
 
 class InteractiveObject(AvatarObject):

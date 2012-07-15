@@ -9,6 +9,11 @@ def screenSorter(a):
     return a[-1].x
 
 
+class AvatarLayer(GameObject):
+    def __init__(self, area, extent):
+        self.area = area
+
+
 class LevelCamera(GameObject):
     """
     The level camera manages sprites on the screen and a tilemap renderer.
@@ -115,9 +120,6 @@ class LevelCamera(GameObject):
             bbox = self.area.getBBox(a)
             x, y, z, d, w, h = bbox
             x, y = self.worldToSurface((x, y, z))
-            #xx, yy = a.avatar.axis
-            #x += xx
-            #y += yy
             x = x - self.extent.top + rect.top
             y = y - self.extent.left + rect.left
             onScreen.append((a.avatar.image, Rect((x, y), (w, h)), 1, a, bbox))

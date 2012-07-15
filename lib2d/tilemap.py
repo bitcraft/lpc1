@@ -17,6 +17,10 @@ def generateDefaultImage(size):
     i.set_alpha(128)
     return i
 
+def overlappingTiles(rect, layers):
+    layers = xrange(layers)
+    tiles = ( getTile((x/tw + left, y/th + top, l)) for l in layers )
+
 
 class BufferedTilemapRenderer(GameObject):
     """
@@ -315,7 +319,6 @@ class BufferedTilemapRenderer(GameObject):
             self.redraw()
             self.blank = False
 
-
         surblit = surface.blit
         left, top = self.view.topleft
         ox, oy = self.xoffset, self.yoffset
@@ -328,6 +331,7 @@ class BufferedTilemapRenderer(GameObject):
         origClip = surface.get_clip()
         surface.set_clip(rect)
 
+        # draw the entire map to the surface
         surblit(self.buffer, (-ox, -oy))
 
         # TODO: make sure to filter out surfaces outside the screen
@@ -344,9 +348,8 @@ class BufferedTilemapRenderer(GameObject):
             dirtyRect = dirtyRect.move(ox, oy)
             for r in self.layerQuadtree.hit(dirtyRect):
                 x, y, tw, th = r
-                for l in range(layer+1, len(self.tmx.visibleTileLayers)):
-                    # there is a collision between a tile and a image, so
-                    # we simply reblit the affected tiles over the sprite
+                layers = xrange(layer+1, len(self.tmx.visibleTileLayers))
+                for l in layers: 
                     tile = getTile((x/tw + left, y/th + top, l))
                     if tile:
                         surblit(tile, (x-ox, y-oy))
@@ -375,7 +378,6 @@ class BufferedTilemapRenderer(GameObject):
 
             images = ifilter(lambda x: x[1], ((i, getTile(i)) for i in self.queue))
             [ blit(image, (x*tw-ltw, y*th-tth)) for ((x,y,l), image) in images ]
-
 
             self.queue = None
 
