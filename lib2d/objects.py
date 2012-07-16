@@ -114,6 +114,13 @@ class GameObject(object):
         pass
 
 
+    def loadAll(self):
+        """
+        load this and the children
+        """
+        [ child.load() for child in self.getChildren() ]
+
+
     def unload(self):
         """
         anything that could be removed from memory should be removed here.

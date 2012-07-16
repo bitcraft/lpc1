@@ -86,6 +86,9 @@ class Avatar(GameObject):
         animation files must match the units provided here.  ie: milliseconds.
         """
 
+        if self.ttl < 0:
+            return
+
         self.timer += time
 
         while (self.timer >= self.ttl):
@@ -101,7 +104,7 @@ class Avatar(GameObject):
                 elif self.loop < 0:
                     self.iterator = iter(self.curAnimation)
                     self.ttl, self.curFrame = next(self.iterator)
-           
+
  
     def isPlaying(self, name):
         if isinstance(name, animation.Animation):

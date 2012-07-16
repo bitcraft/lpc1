@@ -149,8 +149,11 @@ class StaticAnimation(Animation):
         self.size = size
         self.image = None
 
+        self.frames = [0]
+        self.timing = [-1]
 
-    def loaded(self):
+
+    def load(self):
         """
         load the images for use with pygame
         """
@@ -169,8 +172,6 @@ class StaticAnimation(Animation):
         else:
             self.image = image
 
-        self.frames = [self.image]
-
 
     def returnNew(self):
         return self
@@ -178,10 +179,6 @@ class StaticAnimation(Animation):
 
     def unload(self):
         self.image = None
-
-
-    def getTTL(self, number):
-        return -1
 
 
     def getImage(self, number, direction=0):
@@ -192,6 +189,7 @@ class StaticAnimation(Animation):
 
         return self.image
 
+
     def __repr__(self):
-        return "<Animation %s: \"%s\">" % (id(self), self.filename)
+        return "<StaticAnimation %s: \"%s\">" % (id(self), self.filename)
 

@@ -193,8 +193,9 @@ class GraphicIcon(UIElement):
 
     def load(self):
         if self.image is None:
-            image = res.loadImage(self.filename)
+            image = res.loadImage(self.filename, 0, 1, 1)
             self.originalImage = pygame.transform.scale(image, (16,16))
+            #self.originalImage.set_colorkey(self.originalImage.get_at((0,0)))
             self.image = self.originalImage.copy()
             self.enabled = True
 
@@ -238,6 +239,7 @@ class RoundMenu(UIElement):
     def __init__(self, parent):
         UIElement.__init__(self, parent)
         self.icons = []
+        self.anchor = None
 
 
     def setIcons(self, icons):
@@ -249,10 +251,11 @@ class RoundMenu(UIElement):
     def open(self, point):
         """ start the animation of the menu """
         self.enabled = True
+        self.anchor = point
         rect = pygame.Rect(point-(32,8), (16,16))
         for i, icon in enumerate(self.icons):
-            self.parent.freeSpace.add(icon, rect.move(16*i,0))
-  
+            self.parent.freeSpace.add(icon, rect.move(16*i,0))  
+
  
     def close(self):
         self.enabled = False
@@ -271,6 +274,7 @@ class PanTool(MouseTool, UIElement):
         UIElement.__init__(self, parent)
         self.drag_origin = None
         self.openMenu = None
+        self.avatar_focus = None
 
 
     def load(self):
@@ -278,24 +282,30 @@ class PanTool(MouseTool, UIElement):
 
 
     def onClick(self, element, point, button):
-        if isinstance(element, VirtualMapElement):
-            self.drag_origin = None
-            self.openMenu = testMenu(self.parent)
-            self.openMenu.open(point)
+
+        if self.avatar_focus is None:
+            if isinstance(element, VirtualMapElement):
+                self.openMenu = testMenu(self.parent)
+                self.openMenu.open(point)
+            elif isinstance(element, VirtualAvatarElement):
+                self.avatar_focus = element.avatar
+            else:
+                element.onClick(point, button)
         else:
-            element.onClick(point, button)
+            # pathfind?
+            self.avatar_focus = None 
 
 
     def onDrag(self, element, point, button, origin):
         if isinstance(element, VirtualMapElement):
-            if self.drag_origin is None:
-                x = element.parent._rect.width / 2
-                y = element.parent._rect.height / 2
-                self.drag_origin = element.camera.surfaceToWorld((x, y))
+            if not origin == self.drag_origin:
+                self.drag_origin = origin
+                self.drag_initial_center = element.camera.extent.center
 
-            x, y, z = self.drag_origin
-            dy, dx = point[0] - origin[0], point[1] - origin[1]
-            element.camera.center((x-dx, y-dy, z))
+            dx, dy = origin - point
+            cx, cy = self.drag_initial_center
+            element.camera.center((cx+dy, cy+dx, 0))
+
 
 
 class Frame(UIElement):
@@ -368,7 +378,7 @@ class UserInterface(Frame):
 
         #mouse hack
         self.drag_origin = None
-        self.drag_el = None
+        self.drag_element = None
         self.hovered = None
 
 
@@ -457,7 +467,7 @@ class UserInterface(Frame):
                     pos = vec.Vec2d(pos[0] - rect.left, pos[1] - rect.top)
                     if state == BUTTONDOWN:
                         self.drag_origin = pos
-                        self.drag_el = el
+                        self.drag_element = el
 
                     elif state == BUTTONUP:
                         d = abs(sum(pos - self.drag_origin))
@@ -466,14 +476,14 @@ class UserInterface(Frame):
 
                     elif state == BUTTONHELD:
                         d = abs(sum(pos - self.drag_origin))
-                        if el == self.drag_el and d > self.drag_sensitivity:
+                        if el == self.drag_element and d > self.drag_sensitivity:
                             self.mouseTool.onDrag(el, pos, 1, self.drag_origin)
 
             elif cmd == CLICK2:
                 pass
+
             elif cmd == MOUSEPOS:
                 el, rect = self.findElement(arg)
-                print el
                 if el and not self.hovered:
                     pos = (arg[0] - rect.left, arg[1] - rect.top)
                     self.mouseTool.onBeginHover(el, pos)
@@ -487,7 +497,17 @@ class UserInterface(Frame):
 
 def testMenu(parent):
     def func(menu):
+        import lib.blacksmith as b
         menu.close()
+        # this will return a VirtualMapElement
+        element, rect = menu.parent.findElement(menu.anchor)
+        if isinstance(element, VirtualMapElement):
+            anvil = b.Anvil()
+            anvil.loadAll()
+            coords = element.camera.surfaceToWorld(menu.anchor)
+            element.camera.area.add(anvil)
+            element.camera.area.setPosition(anvil, coords)
+
 
     m = RoundMenu(parent)
     a = GraphicIcon("grasp.png", func, [m])

@@ -19,6 +19,7 @@ class LevelCamera(GameObject):
     The level camera manages sprites on the screen and a tilemap renderer.
     """
 
+    name = 'LevelCamera'
 
     def __init__(self, area, extent):
         self.area = area
@@ -29,7 +30,7 @@ class LevelCamera(GameObject):
 
         # create a renderer for the map
         self.maprender = BufferedTilemapRenderer(area.tmxdata, (w, h))
-        self.maprender.center(self.extent.center)
+        self.maprender.center((w/2, h/2))
 
         # translate tiled map coordinates to world coordinates (swap x & y)
         self.map_height = area.tmxdata.tilewidth * area.tmxdata.width
@@ -66,6 +67,13 @@ class LevelCamera(GameObject):
         self.width  = self.extent.width
         self.height = self.extent.height
         self.zoom = 1.0
+
+
+    def scroll(self, (x, y, z)):
+        self.extent.top += x
+        self.extent.left += y
+        x, y = self.extent.center
+        self.maprender.center(self.worldToSurface((x,y,z)))
 
 
     def center(self, (x, y, z)):
