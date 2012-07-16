@@ -49,7 +49,7 @@ double_buffer = False
 hwsurface = False
 #surface_flags = pygame.FULLSCREEN
 surface_flags = 0
-
+#surface_flags = pygame.RESIZABLE
 
 def hardware_checks():
     """
