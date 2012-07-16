@@ -14,7 +14,7 @@ this is a bare-bones simple draw toolkit for mouse use only.
 
 from lib2d.buttons import *
 from lib2d import res, draw, vec
-import pygame
+import pygame, collections
 
 
 
@@ -287,7 +287,6 @@ class PanTool(MouseTool, UIElement):
 
 
     def onDrag(self, element, point, button, origin):
-        print "drag", element, point
         if isinstance(element, VirtualMapElement):
             if self.drag_origin is None:
                 x = element.parent._rect.width / 2
@@ -350,7 +349,7 @@ class UserInterface(Frame):
     background = (109, 109, 109)
     foreground = (0, 0, 0)
 
-    drag_sensitivity = 4
+    drag_sensitivity = 2
 
     def __init__(self):
         self.blank = True
@@ -460,7 +459,7 @@ class UserInterface(Frame):
                         self.drag_origin = pos
                         self.drag_el = el
 
-                    if state == BUTTONUP:
+                    elif state == BUTTONUP:
                         d = abs(sum(pos - self.drag_origin))
                         if d < self.drag_sensitivity:
                             self.mouseTool.onClick(el, pos, 1)
@@ -474,6 +473,7 @@ class UserInterface(Frame):
                 pass
             elif cmd == MOUSEPOS:
                 el, rect = self.findElement(arg)
+                print el
                 if el and not self.hovered:
                     pos = (arg[0] - rect.left, arg[1] - rect.top)
                     self.mouseTool.onBeginHover(el, pos)
@@ -531,7 +531,7 @@ class ViewPort(Frame):
         Frame.__init__(self, parent, OpenPacker())
         self.area = area
         self.camera = None
-        self.elements = {}
+        self.elements = collections.OrderedDict()
 
         self.virtualElements = {}
 
@@ -575,8 +575,13 @@ class ViewPort(Frame):
             x, y = self.camera.worldToSurface((x, y, z))
             x = x - self.camera.extent.top + rect.top
             y = y - self.camera.extent.left + rect.left
-            e = VirtualAvatarElement(self, a)
-            #self.packer.elements[e] = pygame.Rect(x, y, w, h)
+            try:
+                e = self.virtualElements[a]
+            except KeyError:
+                e = VirtualAvatarElement(self, a)
+                self.virtualElements[a] = e
+            else:
+                self.packer.elements[e] = pygame.Rect(x, y, w, h)
 
         return dirty
 
