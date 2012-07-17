@@ -113,6 +113,15 @@ def loadImage(name, alpha=False, colorkey=False, fake=False):
 
     return image
 
+
+def loadTile(filename, tileSize, pos):
+    image = loadImage(filename)
+    surface = pygame.Surface(tileSize)
+    surface.blit(image, (0,0),
+                ((pos[0] * tileSize[0], pos[1] * tileSize[1]), tileSize))
+    return surface
+
+
 def soundPath(filename):
     return os.path.join(_resPath, "sounds", filename)
 

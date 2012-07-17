@@ -152,6 +152,11 @@ class CallableAction(InstancedAction):
         """
         if self.state == ACTIONSTATE_RUNNING:
             self.state = ACTIONSTATE_FINISHED
+            self.onFinish()
+
+
+    def onFinish(self):
+        pass
 
 
     def ok_finish(self):
