@@ -42,7 +42,7 @@ class LevelCamera(Element):
 
         # create a renderer for the map
         self.maprender = BufferedTilemapRenderer(area.tmxdata, (w, h))
-        self.maprender.center((w/2, h/2))
+        #self.maprender.center((w/2, h/2))
 
         # translate tiled map coordinates to world coordinates (swap x & y)
         self.map_height = area.tmxdata.tilewidth * area.tmxdata.width
@@ -87,33 +87,29 @@ class LevelCamera(Element):
         expects to be in world coordinates (x & y axis swapped)
         """
 
+        if self.map_height >= self.height:
+            if y <= self.half_height:
+                y = self.half_height
+
+            elif y > self.map_height - self.half_height:
+                y = self.map_height - self.half_height
+        else:
+            y = self.map_height / 2
+
+        if self.map_width >= self.width:
+            if x <= self.half_width:
+                x = self.half_width
+
+            elif x > self.map_width - self.half_width - 1:
+                x = self.map_width - self.half_width - 1
+
+        else:
+            x = self.map_width / 2
+
         self.extent.center = (x, y)
         x += self.extent.left       #hack
         y += self.extent.top        #hack
         self.maprender.center(self.worldToSurface((x,y,z)))
-
-        return
-
-
-
-        if self.map_height > self.height:
-            if x < self.half_height:
-                x = self.half_height
-
-            elif x > self.map_height - self.half_height:
-                x = self.map_height - self.half_height
-        else:
-            x = self.map_height / 2
-
-        if self.map_width > self.width:
-            if y < self.half_width:
-                y = self.half_width
-
-            elif y > self.map_width - self.half_width - 1:
-                y = self.map_width - self.half_width - 1
-
-        else:
-            y = self.map_width / 2
 
 
     def clear(self, surface):

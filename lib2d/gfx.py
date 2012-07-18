@@ -113,4 +113,4 @@ def set_scale(scale, transform="scale"):
 
 
 def get_rect():
-    return pygame.Rect((0,0), screen_dim)
+    return pygame.Rect((0,0), buffer_dim)
