@@ -558,7 +558,7 @@ class Area(AbstractArea, AdventureMixin):
         """
 
         def NodeFactory(pos):
-            x, y = pos
+            x, y = pos[:2]
             l = 0
             return Node((x, y))
 
@@ -572,9 +572,9 @@ class Area(AbstractArea, AdventureMixin):
             else:
                 return node
 
-        start = start[:2]
-        #finish = self._worldToTile(destination[:2])
-        path = astar.search(start, finish, NodeFactory)
+        start = self.worldToTile(start)
+        destination = self.worldToTile(destination)
+        path = astar.search(start, destination, NodeFactory)
         return path
 
 

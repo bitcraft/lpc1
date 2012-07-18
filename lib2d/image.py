@@ -24,20 +24,20 @@ class ImageTile(object):
     Allows you to easily pull tiles from other images
     """
 
-    def __init__(self, parent, tileSize, tileLocation):
-        self.parent = parent
-        self.tileSize = tileSize
-        self.tileLocation = tileLocation
+    def __init__(self, filename, tile, tilesize):
+        self.image = Image(filename)
+        self.tile = tile
+        self.tilesize = tilesize
 
     def load(self):
         self.loaded = True
-        if self.parent.loaded:
-            surface = self.parent.load()
+        if self.image.loaded:
+            surface = self.image.load()
         else:
-            surface = self.parent.load()
-        temp = pygame.Surface(tilesize).convert(surface)
-        temp.blit(parent, (0,0),
-                  ((self.tileSize[0] * self.tileLocation[0],
-                    self.tileSize[1] * self.tileLocation[1]),
-                    self.tileSize))
+            surface = self.image.load()
+        temp = pygame.Surface(self.tilesize).convert(surface)
+        temp.blit(surface, (0,0),
+                  ((self.tilesize[0] * self.tile[0],
+                    self.tilesize[1] * self.tile[1]),
+                    self.tilesize))
         return temp

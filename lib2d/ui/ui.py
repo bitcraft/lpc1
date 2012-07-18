@@ -29,6 +29,7 @@ class GraphicIcon(Element):
 
     def __init__(self, image, func, arg=[], kwarg={}, uses=1):
         Element.__init__(self)
+        if arg == []: arg = [self]
         self.func = (func, arg, kwarg)
         self.uses = uses
         self._image = image
@@ -36,7 +37,7 @@ class GraphicIcon(Element):
 
     def load(self):
         surface = self._image.load()
-        self.originalImage = pygame.transform.scale(surface, (32, 32))
+        self.originalImage = pygame.transform.scale(surface, (16, 16))
         self.image = self.originalImage.copy()
         self.enabled = True
 
@@ -87,10 +88,11 @@ class RoundMenu(Element):
         """ start the animation of the menu """
         self.enabled = True
         self.anchor = point
-        w = 16 * len(self.icons)
-        rect = pygame.Rect(point-(w/2,8), (16,16))
+        tw, th = self.icons[0].image.get_size()
+        w = tw * len(self.icons)
+        rect = pygame.Rect(point-(w/2,8), (tw, th))
         for i, icon in enumerate(self.icons):
-            icon.rect = rect.move(16*i, 0)
+            icon.rect = rect.move(tw*i, 0)
             self.parent.parent.addElement(icon)
 
     def close(self):

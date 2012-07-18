@@ -92,7 +92,7 @@ class Animation(GameObject):
         tw = iw / self.real_frames
         th = ih / self.directions
         self.images = [None] * (self.directions * self.real_frames)
-      
+     
         d = 0
         for y in range(0, ih, th):
             #if d == ih/th: d = 0

@@ -31,9 +31,12 @@ class TimedAction(actions.CallableAction):
         print self, "finished"
 
 
-class HardenAction(TimedAction):
-    icon_name = "anvil.png"
 
+
+# =====  ITEM: ANVIL  =========================================================
+
+class HardenAction(TimedAction):
+    icon = Image("anvil.png")
 
 class hardenBuilder(actions.ActionBuilder):
     def get_actions(self, caller, bb):
@@ -43,12 +46,8 @@ class hardenBuilder(actions.ActionBuilder):
         action = HardenAction(caller, 300)
         return action
 
+
 harden = hardenBuilder()
-
-
-
-
-
 
 def Anvil():
     anvilAnimation = animation.StaticAnimation("anvil.png", 'idle')
@@ -57,3 +56,11 @@ def Anvil():
     return anvil
 
 
+# =============================================================================
+# =====  ITEM: FURNACE  =======================================================
+
+def Furnace():
+    pass
+
+
+# =============================================================================
