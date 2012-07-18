@@ -247,7 +247,8 @@ class VirtualAvatarElement(Element):
         self.avatar = avatar
 
     def draw(self, surface):
-        pygame.draw.rect(surface, (0,255,0), self.rect, 1)
+        #pygame.draw.rect(surface, (0,255,0,64), self.rect, 1)
+        pass
 
     def onClick(self, point, button):
         print "clicked", self.avatar

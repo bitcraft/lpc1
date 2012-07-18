@@ -7,7 +7,7 @@ import pygame
 class TestGame(Game):
     def start(self):
         from lib.titlescreen import TitleScreen
-        gfx.set_screen((1024, 600), 2, "scale")
+        gfx.set_screen((1024, 600), 3, "scale")
         self.sd.reload_screen()
         self.sd.start(TitleScreen(self.sd))
         self.sd.run()

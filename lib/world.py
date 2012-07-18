@@ -96,9 +96,9 @@ def build():
     # some characters
     avatar = Avatar([
         Animation(
-            Image("elf-female-walk.png"),
+            Image("healer-female-walk.png", colorkey=True),
             "walk",
-            [0,1,2,3,4,5,6,7,8], 4, 100),
+            [0,1,2,1], 4, 200),
     ])
 
     npc = Entity(

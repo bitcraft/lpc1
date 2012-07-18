@@ -8,7 +8,7 @@ class Image(object):
     Surface class that is pickable.  :)
     """
 
-    def __init__(self, filename, alpha=None, colorkey=None):
+    def __init__(self, filename, alpha=False, colorkey=False):
         self.filename = filename
         self.alpha = alpha
         self.colorkey = colorkey

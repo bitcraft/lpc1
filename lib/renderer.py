@@ -91,8 +91,8 @@ class LevelCamera(Element):
             if y <= self.half_height:
                 y = self.half_height
 
-            elif y > self.map_height - self.half_height:
-                y = self.map_height - self.half_height
+            elif y > self.map_height - self.half_height- 1:
+                y = self.map_height - self.half_height - 1 
         else:
             y = self.map_height / 2
 
