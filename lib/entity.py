@@ -26,9 +26,5 @@ class Entity(InteractiveObject):
 
     def __init__(self, avatar, builders, face):
         super(Entity, self).__init__(avatar, builders)
-        self._faceImage = face
-
-    def load(self):
-        AvatarObject.load(self)
-        self.faceImage = self._faceImage.load()
+        self.faceImage = face
 

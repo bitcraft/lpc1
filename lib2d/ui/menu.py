@@ -134,7 +134,7 @@ class Menu(Element):
     def draw(self, surface):
         if self.update_buttons:
             rects = [ o.image.get_rect() for o in self.options ]
-            self.points = positionRects(rects, self.alignment, self.spacing, rect.topleft)
+            self.points = positionRects(rects, self.alignment, self.spacing, self.rect.topleft)
             self.update_buttons = False
 
         return [ surface.blit(o.image, self.points[i]) for i, o in enumerate(self.options) ]

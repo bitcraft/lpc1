@@ -1,5 +1,6 @@
 from lib2d.ui import Element, VirtualMapElement, VirtualAvatarElement
 from lib2d.ui import GraphicIcon, RoundMenu
+from lib2d.image import Image
 from lib2d.mouse.tools.mousetool import MouseTool
 from lib2d import res
 
@@ -14,6 +15,7 @@ class PanTool(MouseTool, Element):
         self.drag_origin = None
         self.openMenu = None
         self.entity_focus = None
+        self.entity_icon = None
 
 
     def load(self):
@@ -32,29 +34,33 @@ class PanTool(MouseTool, Element):
 
             elif isinstance(element, VirtualAvatarElement):
                 self.onSelectEntity(element.avatar)
-                actions = element.avatar.queryActions(None)
-                icons = [ GraphicIcon(a.icon, None) for a in actions ]
-                menu = RoundMenu(element)
-                menu.setIcons(icons)
-                menu.open(point)
+                #actions = element.avatar.queryActions(None)
+                #icons = [ GraphicIcon(a.icon, None) for a in actions ]
+                #menu = RoundMenu(element)
+                #menu.setIcons(icons)
+                #menu.open(point)
 
             else:
                 element.onClick(point, button)
 
         else:
-            # pathfind?
-            self.entity_focus = None 
+            self.onSelectEntity(None)   # clear the focus
 
 
-    def onSelectEntity(self, entity):
+    def onSelectEntity(self, entity=None):
         self.entity_focus = entity
-        self.setInfoIcon(entity.faceImage)
 
+        if self.entity_icon:
+            self.parent.removeElement(self.entity_icon)
+            self.entity_icon = None
 
-    def setInfoIcon(self, surface):
-        icon = GraphicIcon(surface, None)
-        w, h = self.parent.get_size()
-        self.parent.addElement(icon, pygame.Rect(w-32,0,0,0))
+        if entity:
+            w, h = self.parent.rect.size
+            icon = GraphicIcon(entity.faceImage, None)
+            icon.rect = pygame.Rect(w-32,0,32,32)
+            icon.load()
+            self.parent.addElement(icon)
+            self.entity_icon = icon
 
 
     def onDrag(self, element, point, button, origin):
@@ -82,7 +88,7 @@ def testMenu(parent):
         menu.parent.camera.area.setPosition(anvil, (x, y, z))
 
 
-    image = res.loadImage("grasp.png")
+    image = Image("grasp.png")
 
     m = RoundMenu(parent)
     a = GraphicIcon(image, func, [m])

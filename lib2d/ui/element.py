@@ -11,7 +11,8 @@ class Element(object):
 
     @property
     def rect(self):
-        if self._rect: return self._rect
+        if self._rect is not None:
+            return self._rect
         msg = "Element: {0} does not have it's rect set.  Crashing."
         raise AttributeError, msg.format(self)
 

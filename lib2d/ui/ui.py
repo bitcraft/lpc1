@@ -27,16 +27,17 @@ class GraphicIcon(Element):
     TODO: cache the image so it isn't duplicated in memory
     """
 
-    def __init__(self, surface, func, arg=[], kwarg={}, uses=1):
+    def __init__(self, image, func, arg=[], kwarg={}, uses=1):
         Element.__init__(self)
         self.func = (func, arg, kwarg)
         self.uses = uses
+        self._image = image
         self.image = None
-        self.originalImage = pygame.transform.scale(surface, (16, 16))
-        self.image = self.originalImage.copy()
-        self.load()
 
     def load(self):
+        surface = self._image.load()
+        self.originalImage = pygame.transform.scale(surface, (32, 32))
+        self.image = self.originalImage.copy()
         self.enabled = True
 
     def unload(self):
@@ -61,6 +62,8 @@ class GraphicIcon(Element):
         self.image = self.originalImage.copy()
 
     def draw(self, surface):
+        if self.image is None:
+            raise Exception, "Image is not loaded, cannot be drawn"
         return surface.blit(self.image, self.rect)
 
 
@@ -159,6 +162,8 @@ class UserInterface(Frame):
     def draw(self, surface):
         Frame.draw(self, surface)
 
+        return
+
         x, y, w, h = self.rect
         back_width = x+int((w*.70))
         self.buildInterface((x, y, w, h))
@@ -211,7 +216,6 @@ class UserInterface(Frame):
                     elif state == BUTTONUP:
                         d = abs(sum(pos - self.drag_origin))
                         if d < self.drag_sensitivity:
-                            print "clicking", el
                             self.mouseTool.onClick(el, pos, 1)
 
                     elif state == BUTTONHELD:

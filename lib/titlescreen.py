@@ -55,7 +55,7 @@ class TitleScreen(GameState):
 
     def reactivate(self):
         if self.game:
-            self.menu = cMenu(20, -5, 'vertical', 100,
+            self.menu = Menu(20, -5, 'vertical', 100,
                 [('New Game', self.new_game),
                 ('Continue', self.continue_game),
                 #('Save', self.save_game),
@@ -71,6 +71,7 @@ class TitleScreen(GameState):
                 ('Quit', self.quit_game)],
                 font="visitor1.ttf", font_size=20)
 
+        self.menu.rect = pygame.Rect(12,12,20,100)
         self.redraw = True
         #res.playMusic("oneslymove.ogg")
 
@@ -87,7 +88,7 @@ class TitleScreen(GameState):
             else:
 
                 self.borderFilled.draw(surface, surface.get_rect().inflate(5,5))
-        self.menu.draw(surface, pygame.Rect((32, 32,1,1)))
+        self.menu.draw(surface)
 
 
     def new_game(self):
