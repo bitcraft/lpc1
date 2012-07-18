@@ -1,6 +1,7 @@
 import pygame
 
 
+
 class Element(object):
     def __init__(self, parent=None):
         self.parent = parent
@@ -8,19 +9,27 @@ class Element(object):
         self._rect = None
 
 
-    def setParent(self, parent):
-        self.parent = parent
+    @property
+    def rect(self):
+        if self._rect: return self._rect
+        msg = "Element: {0} does not have it's rect set.  Crashing."
+        raise AttributeError, msg.format(self)
 
 
-    def draw(self, surface, rect):
-        if (not self._rect == rect) and (rect is not None):
-            self.onResize(rect)
-            self._rect = pygame.Rect(rect)
-        return self.onDraw(surface, rect)
+    @rect.setter
+    def rect(self, rect):
+        self._rect = pygame.Rect(rect)
+        self.resize()
 
 
-    def onResize(self, rect):
-        pass        
+    def draw(self, surface):
+        print "DEBUG: {} has no draw()".format(self.__class__.__name__)
+
+
+    def resize(self):
+        """ call this in case the class does stuff to resize """
+        #print "DEBUG: resizing {0}".format(self)
+        pass
 
 
     def getUI(self):
@@ -34,16 +43,13 @@ class Element(object):
         pass
 
 
-    def onDraw(self, surface, rect):
-        pass
-
-
     def onClick(self, point, button):
         pass
 
 
     def onBeginHover(self, point):
         pass
+
 
     def onEndHover(self, point):
         pass

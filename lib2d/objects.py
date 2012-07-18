@@ -118,6 +118,7 @@ class GameObject(object):
         """
         load this and the children
         """
+        self.load()
         [ child.load() for child in self.getChildren() ]
 
 

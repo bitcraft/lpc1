@@ -3,7 +3,9 @@ from lib2d.buildarea import fromTMX
 from lib2d.avatar import Avatar
 from lib2d.animation import Animation, StaticAnimation
 from lib2d.objects import AvatarObject
+from lib2d.image import Image
 from lib.level import Level
+from lib.entity import Entity
 from lib2d import res
 
 from collections import defaultdict, deque
@@ -15,6 +17,8 @@ import os
 
 world_size = (256, 256)
 region_size = (16, 16)
+
+
 
 
 def generateWorld():
@@ -90,12 +94,20 @@ def build():
 
 
     # some characters
-    ani0 = Animation("warrior-male-walk.png", "walk", [0,1,2,1], 4, 200)
-    ani1 = Animation("warrior-male-stand.png", "stand", 1, 4)
-    ani2 = Animation("warrior-male-attack.png", "attack", 4, 4, 60)
-    avatar = Avatar((ani0, ani1, ani2))
-    npc = AvatarObject(avatar)
-    npc.setName("Rat")
+    avatar = Avatar([
+        Animation(
+            Image("BRivera--femaleelfwalk.png"),
+            "walk",
+            [0,1,2,3,4,5,6,7,8], 4, 100),
+    ])
+
+    npc = Entity(
+        avatar,
+        [],
+        Image('face0.png')
+    )
+
+    npc.setName("Brahbrah")
     npc.setGUID(1)
     npc.size = (16,16,18)
     uni.add(npc)

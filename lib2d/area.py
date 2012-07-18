@@ -126,7 +126,7 @@ class AdventureMixin(object):
 
 
     def worldToPixel(self, (x, y, z)):
-        return (y, x)
+        return Vec2d((y, x))
 
 
     def worldToTile(self, (x, y, z)):

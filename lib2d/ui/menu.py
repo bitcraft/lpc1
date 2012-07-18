@@ -18,11 +18,12 @@ You should have received a copy of the GNU General Public License
 along with lib2d.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import res
-import banner
-import pygame
+from lib2d.ui import Element
+from lib2d import res, banner
+
 from collections import namedtuple
 from pygame.locals import *
+import pygame
 
 
 
@@ -75,7 +76,7 @@ def positionRects(rects, alignment, spacing=(0,0), origin=(0,0)):
     return points
 
 
-class cMenu(object):
+class Menu(Element):
     """
     simple menu that is controlled by keys
     
@@ -130,7 +131,7 @@ class cMenu(object):
         self.update_buttons = True
 
 
-    def draw(self, surface, rect):
+    def draw(self, surface):
         if self.update_buttons:
             rects = [ o.image.get_rect() for o in self.options ]
             self.points = positionRects(rects, self.alignment, self.spacing, rect.topleft)

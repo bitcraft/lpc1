@@ -61,10 +61,6 @@ class Avatar(GameObject):
         self.curImage = self.curAnimation.getImage(self.curFrame, angle) 
 
 
-    def draw(self, surface, rect):
-        return surface.blit(self.image, rect.topleft)
-
-
     @property
     def image(self):
         self._updateCache()

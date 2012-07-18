@@ -111,3 +111,6 @@ def set_scale(scale, transform="scale"):
     screen = Surface(buffer_dim, surface_flags)
     #screen_surface = pygame.display.set_mode(screen_dim)
 
+
+def get_rect():
+    return pygame.Rect((0,0), screen_dim)

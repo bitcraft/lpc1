@@ -16,7 +16,7 @@ from lib2d.ui.packer import GridPacker
 from lib2d.ui import Element, Frame
 from lib2d.buttons import *
 from lib2d import res, draw, vec
-import pygame
+import pygame, itertools
 
 
 
@@ -36,7 +36,6 @@ class GraphicIcon(Element):
         self.image = self.originalImage.copy()
         self.load()
 
-
     def load(self):
         self.enabled = True
 
@@ -45,7 +44,6 @@ class GraphicIcon(Element):
         self.func = None
         self.enabled = False
 
-
     def onClick(self, point, button):
         if self.uses > 0 and self.enabled:
             self.func[0](*self.func[1], **self.func[2])
@@ -53,21 +51,17 @@ class GraphicIcon(Element):
             if self.uses == 0:
                 self.unload()
 
-
     def onDrag(self, point, button, origin):
         pass
-
 
     def onBeginHover(self, point):
         self.image.fill((96,96,96), special_flags=pygame.BLEND_ADD)
 
-
     def onEndHover(self, point):
         self.image = self.originalImage.copy()
 
-
-    def onDraw(self, surface, rect):
-        return surface.blit(self.image, rect.topleft)
+    def draw(self, surface):
+        return surface.blit(self.image, self.rect)
 
 
 class RoundMenu(Element):
@@ -81,12 +75,10 @@ class RoundMenu(Element):
         self.icons = []
         self.anchor = None
 
-
     def setIcons(self, icons):
         self.icons = icons
         for i in icons:
             i.load()
-
 
     def open(self, point):
         """ start the animation of the menu """
@@ -95,19 +87,14 @@ class RoundMenu(Element):
         w = 16 * len(self.icons)
         rect = pygame.Rect(point-(w/2,8), (16,16))
         for i, icon in enumerate(self.icons):
-            self.parent.addElement(icon, rect.move(16*i,0))  
+            icon.rect = rect.move(16*i, 0)
+            self.parent.parent.addElement(icon)
 
- 
     def close(self):
         self.enabled = False
         for i in self.icons:
             i.unload()
-            self.parent.removeElement(i)
-
- 
-    def onDraw(self, surface, rect):
-        pass
-
+            self.parent.parent.removeElement(i)
 
 
 class UserInterface(Frame):
@@ -130,7 +117,6 @@ class UserInterface(Frame):
 
         self.blank = True
         self.packer = GridPacker()
-        self.rect = None
 
         self.tools = [ PanTool(self) ]
         for tool in self.tools:
@@ -171,13 +157,9 @@ class UserInterface(Frame):
 
 
     def draw(self, surface):
-        surface_rect = surface.get_rect()
-        self.rect = surface.get_rect()
+        Frame.draw(self, surface)
 
-        for element, rect in self.packer.getLayout(surface_rect):
-            element.draw(surface, rect)
-
-        x, y, w, h = surface_rect
+        x, y, w, h = self.rect
         back_width = x+int((w*.70))
         self.buildInterface((x, y, w, h))
         surface.blit(self.buttonbar, (x+int(w*.70)+1,0))
@@ -194,23 +176,23 @@ class UserInterface(Frame):
         """
 
         def searchPacker(packer):
-            layout = packer.getLayout()
+            layout = list(packer.elements)
             while layout:
-                element, rect = layout.pop()
-                if rect.collidepoint(point):
+                element = layout.pop()
+                if element.rect.collidepoint(point):
                     if isinstance(element, Frame):
-                        layout.extend(element.packer.getLayout())
+                        layout.extend(element.packer.elements)
                     else:
-                        return element, rect                
+                        return element
 
-            return None, None
+            return None
 
 
-        element, rect = searchPacker(self.packer)
+        element = searchPacker(self.packer)
         if element:
-            return element, rect
+            return element
         else:
-            return None, None
+            return None
 
 
     # handles all mouse interaction
@@ -219,9 +201,9 @@ class UserInterface(Frame):
             if cmd == CLICK1:
                 state, pos = arg
                 if pos is None: return
-                el, rect = self.findElement(pos)
+                el = self.findElement(pos)
                 if el:
-                    pos = vec.Vec2d(pos[0] - rect.left, pos[1] - rect.top)
+                    pos = vec.Vec2d((pos[0] - el.rect.left, pos[1] - el.rect.top))
                     if state == BUTTONDOWN:
                         self.drag_origin = pos
                         self.drag_element = el
@@ -229,6 +211,7 @@ class UserInterface(Frame):
                     elif state == BUTTONUP:
                         d = abs(sum(pos - self.drag_origin))
                         if d < self.drag_sensitivity:
+                            print "clicking", el
                             self.mouseTool.onClick(el, pos, 1)
 
                     elif state == BUTTONHELD:
@@ -240,14 +223,14 @@ class UserInterface(Frame):
                 pass
 
             elif cmd == MOUSEPOS:
-                el, rect = self.findElement(arg)
+                el = self.findElement(arg)
                 if el and not self.hovered:
-                    pos = (arg[0] - rect.left, arg[1] - rect.top)
+                    pos = vec.Vec2d((arg[0] - el.rect.left, arg[1] - el.rect.top))
                     self.mouseTool.onBeginHover(el, pos)
                     self.hovered = el
 
                 if (not el == self.hovered) and (el is not None):
-                    pos = (arg[0] - rect.left, arg[1] - rect.top)
+                    pos = vec.Vec2d((arg[0] - el.rect.left, arg[1] - el.rect.top))
                     self.hovered.onEndHover(pos)
                     self.hovered = None
 
@@ -257,6 +240,9 @@ class VirtualAvatarElement(Element):
         Element.__init__(self, parent)
         self.avatar = avatar
 
+    def draw(self, surface):
+        pygame.draw.rect(surface, (0,255,0), self.rect, 1)
+
     def onClick(self, point, button):
         print "clicked", self.avatar
 
@@ -265,33 +251,48 @@ class VirtualMapElement(Element):
     def __init__(self, parent, camera):
         Element.__init__(self, parent)
         self.camera = camera
+        self.oldExtent = camera.extent.copy()
+        self.virtualElements = {}
+
+
+    def draw(self, surface):
+        if not self.camera.extent == self.oldExtent:
+            dy = self.camera.extent.left - self.oldExtent.left
+            dx = self.camera.extent.top - self.oldExtent.top
+            self.shift((-dx, -dy))
+            self.oldExtent = self.camera.extent.copy()
+
+        ao = [ i for i in self.camera.area.bodies.keys() if hasattr(i, "avatar")]
+
+        for a in ao:
+            bbox = self.camera.area.getBBox(a)
+            x, y, z, d, w, h = bbox
+            pos = self.camera.worldToSurface((x, y, z)) - self.rect.topleft
+            try:
+                e = self.virtualElements[a]
+            except KeyError:
+                e = VirtualAvatarElement(self, a)
+                self.virtualElements[a] = e
+                self.parent.packer.add(e)
+            finally:
+                e.rect = pygame.Rect(pos, (w, h))
+                
+        self.camera.draw(surface, self.rect)
+
 
     def onClick(self, point, button):
         print "clicked", self.viewport
         
 
+    def shift(self, (x, y)):
+        self.parent.packer.shift((x, y))
+
+
 class ScrollingGridPacker(GridPacker):
-    def getLayout(self, rect=None):
-        items = []
-        dy, dx = self.camera.extent.topleft
-        for element, rect in super(ScrollingGridPacker, self).getLayout(rect):
-            if isinstance(element, VirtualMapElement):
-                items.append((element, rect))
-            else:
-                items.append((element, rect.move(-dx, -dy)))
-                
-        return items
-
-
-    def setCamera(self, camera):
-        self.camera = camera
-
-
-    def getRect(self, element):
-        rect = super(ScrollingGridPacker, self).getRect(element)
-        if rect:
-            dy, dx = self.camera.extent.topleft
-            return rect.move(-dx, -dy)
+    def shift(self, (x, y)):
+        for element in self.elements:
+            if not isinstance(element, VirtualMapElement):
+                element.rect = element.rect.move(x, y)
 
 
 class ViewPort(Frame):
@@ -308,69 +309,29 @@ class ViewPort(Frame):
     def __init__(self, area, parent=None):
         Frame.__init__(self, parent, ScrollingGridPacker())
         self.area = area
-        self.camera = None
         self.map_element = None
-
-        self.virtualElements = {}
 
         if area not in self.loadedAreas:
             self.loadedAreas.append(area)
-            area.load()
-
-            # load the children
-            for child in area.getChildren():
-                child.load()
+            area.loadAll()
 
             # load sounds from area
             #for filename in element.area.soundFiles:
             #    SoundMan.loadSound(filename)
 
-    def onResize(self, rect):
+
+    def resize(self):
+        Frame.resize(self)
+
         from lib.renderer import LevelCamera
 
-        self.camera = LevelCamera(self.area, rect)
-        self.packer.setCamera(self.camera)
+        camera = LevelCamera(self, self.area, self.rect)
+
         if self.map_element is not None:
             self.packer.remove(self.map_element)
 
-        self.map_element = VirtualMapElement(self, self.camera)
-        self.packer.add(self.map_element, self._rect)
-
-
-    def addElement(self, element, rect):
-        dy, dx = self.camera.extent.topleft
-        rect = rect.move(dx, dy)
-        super(ViewPort, self).addElement(element, rect)        
-
-
-    def onDraw(self, surface, surface_rect):
-        dirty = self.camera.draw(surface, surface_rect)
-
-        # big hacks, right here
-        for element, rect in self.packer.getLayout(surface_rect):
-            dirty.append(element.draw(surface, rect))
-
-        # create elements that overlay avatars, so that they are clickable
-        # giant hack
-        ao = [ i for i in self.area.bodies.keys() if hasattr(i, "avatar")]
-
-        for a in ao:
-            bbox = self.area.getBBox(a)
-            x, y, z, d, w, h = bbox
-            x, y = self.camera.worldToSurface((x, y, z))
-            x = x - surface_rect.top
-            y = y - surface_rect.left
-            try:
-                e = self.virtualElements[a]
-            except KeyError:
-                e = VirtualAvatarElement(self, a)
-                self.virtualElements[a] = e
-            else:
-                self.packer.elements[e] = pygame.Rect(x, y, w, h)
-
-            pygame.draw.rect(surface, (0,255,0), (x, y, w, h), 1) 
-
-        return dirty
-
+        self.map_element = VirtualMapElement(self, camera)
+        self.map_element.rect = self.rect
+        self.packer.add(self.map_element)
 
 

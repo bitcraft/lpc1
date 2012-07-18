@@ -3,7 +3,7 @@ from renderer import LevelCamera
 from lib2d.gamestate import GameState
 from lib2d.buttons import *
 from lib2d.signals import *
-from lib2d import res, ui
+from lib2d import res, ui, gfx
 
 import pygame, math, time
 
@@ -83,6 +83,7 @@ class LevelState(GameState):
         vpm = ui.Frame(self.ui, ui.GridPacker())
         vpm.addElement(ui.ViewPort(self.area))
         self.ui.addElement(vpm)
+        self.ui.rect = gfx.get_rect()
 
 
     def draw(self, surface):

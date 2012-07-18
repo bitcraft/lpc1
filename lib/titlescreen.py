@@ -2,7 +2,7 @@ from lib.levelstate import LevelState
 from lib import world
 
 from lib2d.gamestate import GameState
-from lib2d.cmenu import cMenu
+from lib2d.ui import Menu
 from lib2d.objects import loadObject
 from lib2d import res, draw
 

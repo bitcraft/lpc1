@@ -6,7 +6,6 @@ class Frame(Element):
     def __init__(self, parent, packer):
         Element.__init__(self, parent)
         self.packer = packer
-        self.areas = []
 
 
     def setPacker(self, packer):
@@ -21,17 +20,10 @@ class Frame(Element):
         self.packer.remove(other)
 
 
-    def addViewPort(self, element):
-        if isinstance(element, ViewPort):
-            self.packer.add(element)
+    def resize(self):
+        Element.resize(self)
+        self.packer.rect = self.rect
 
 
-    def onDraw(self, surface, rect):
-        dirty = []
-        for element, rect in self.packer.getLayout(rect):
-            dirty.extend(element.draw(surface, rect))
-
-        #for rect in self.packer.getRects():
-        #    self.border.draw(surface, rect.inflate(6,6))
-
-        return dirty
+    def draw(self, surface):
+        return [ e.draw(surface) for e in self.packer.elements ]

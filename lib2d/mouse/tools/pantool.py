@@ -1,9 +1,10 @@
 from lib2d.ui import Element, VirtualMapElement, VirtualAvatarElement
+from lib2d.ui import GraphicIcon, RoundMenu
 from lib2d.mouse.tools.mousetool import MouseTool
 from lib2d import res
 
+import pygame
 
-from lib2d.ui import GraphicIcon, RoundMenu
 
 
 class PanTool(MouseTool, Element):
@@ -12,7 +13,7 @@ class PanTool(MouseTool, Element):
         Element.__init__(self, parent)
         self.drag_origin = None
         self.openMenu = None
-        self.avatar_focus = None
+        self.entity_focus = None
 
 
     def load(self):
@@ -21,18 +22,20 @@ class PanTool(MouseTool, Element):
 
     def onClick(self, element, point, button):
 
-        if self.avatar_focus is None:
+        if self.entity_focus is None:
             if isinstance(element, VirtualMapElement):
-                self.openMenu = testMenu(element.parent)
+                if self.openMenu:
+                    self.openMenu.close()
+
+                self.openMenu = testMenu(element)
                 self.openMenu.open(point)
 
             elif isinstance(element, VirtualAvatarElement):
-                self.avatar_focus = element.avatar
+                self.onSelectEntity(element.avatar)
                 actions = element.avatar.queryActions(None)
                 icons = [ GraphicIcon(a.icon, None) for a in actions ]
-                menu = RoundMenu(element.parent)
+                menu = RoundMenu(element)
                 menu.setIcons(icons)
-                point += element.parent.packer.getRect(element).topleft
                 menu.open(point)
 
             else:
@@ -40,7 +43,18 @@ class PanTool(MouseTool, Element):
 
         else:
             # pathfind?
-            self.avatar_focus = None 
+            self.entity_focus = None 
+
+
+    def onSelectEntity(self, entity):
+        self.entity_focus = entity
+        self.setInfoIcon(entity.faceImage)
+
+
+    def setInfoIcon(self, surface):
+        icon = GraphicIcon(surface, None)
+        w, h = self.parent.get_size()
+        self.parent.addElement(icon, pygame.Rect(w-32,0,0,0))
 
 
     def onDrag(self, element, point, button, origin):
@@ -49,9 +63,9 @@ class PanTool(MouseTool, Element):
                 self.drag_origin = origin
                 self.drag_initial_center = element.camera.extent.center
 
-            dx, dy = origin - point
+            dx, dy = point - origin
             cx, cy = self.drag_initial_center
-            element.camera.center((cx+dy, cy+dx, 0))
+            element.camera.center((cx-dy, cy-dx, 0))
 
 
 def testMenu(parent):

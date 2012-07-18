@@ -1,7 +1,9 @@
 from lib2d.tilemap import BufferedTilemapRenderer
 from lib2d.objects import AvatarObject, GameObject
-from pygame import Rect, draw
+from lib2d.ui import Element
+from lib2d import vec
 
+from pygame import Rect, draw
 import weakref
 
 
@@ -14,14 +16,24 @@ class AvatarLayer(GameObject):
         self.area = area
 
 
-class LevelCamera(GameObject):
+class LevelCamera(Element):
     """
     The level camera manages sprites on the screen and a tilemap renderer.
+
+
+    'extent' expects the rect to be in surface coordinates of the map:
+        x = horizontal
+        y = vertical
+        (0,0) is top left pixel
+
+    it will be mangled some to use the 3d coordinate system of the engine
     """
 
     name = 'LevelCamera'
 
-    def __init__(self, area, extent):
+    def __init__(self, parent, area, extent):
+        Element.__init__(self, parent)
+
         self.area = area
         self.set_extent(extent)
 
@@ -59,7 +71,7 @@ class LevelCamera(GameObject):
         """
 
         # our game world swaps the x and y axis, so we translate it here
-        x, y, w, h = Rect(extent)
+        x, y, w, h = extent
         self.extent = Rect(y, x, h, w)
 
         self.half_width = self.extent.width / 2
@@ -69,13 +81,6 @@ class LevelCamera(GameObject):
         self.zoom = 1.0
 
 
-    def scroll(self, (x, y, z)):
-        self.extent.top += x
-        self.extent.left += y
-        x, y = self.extent.center
-        self.maprender.center(self.worldToSurface((x,y,z)))
-
-
     def center(self, (x, y, z)):
         """
         center the camera on a world location.
@@ -83,6 +88,8 @@ class LevelCamera(GameObject):
         """
 
         self.extent.center = (x, y)
+        x += self.extent.left       #hack
+        y += self.extent.top        #hack
         self.maprender.center(self.worldToSurface((x,y,z)))
 
         return
@@ -114,7 +121,6 @@ class LevelCamera(GameObject):
 
 
     def draw(self, surface, rect):
-        self.rect = rect
         onScreen = []
 
         avatarobjects = self.refreshAvatarObjects()
@@ -127,41 +133,13 @@ class LevelCamera(GameObject):
         for a in avatarobjects:
             bbox = self.area.getBBox(a)
             x, y, z, d, w, h = bbox
-            x, y = self.worldToSurface((x, y, z))
-            x = x - self.extent.top + rect.top
-            y = y - self.extent.left + rect.left
-            onScreen.append((a.avatar.image, Rect((x, y), (w, h)), 1, a, bbox))
+            pos = self.worldToSurface((x, y, z))
+            onScreen.append((a.avatar.image, Rect(pos, (w, h)), 1, a, bbox))
 
         # should not be sorted every frame
         onScreen.sort(key=screenSorter)
 
         return self.maprender.draw(surface, rect, onScreen)
-
-        dirty = self.maprender.draw(surface, rect, onScreen)
-
-        clip = surface.get_clip()
-        surface.set_clip(self.rect)
-
-        #for (x, y, w, h) in self.area.geoRect:
-        #    draw.rect(surface, (128,128,255), \
-        #    (self.toScreen(self.worldToSurface((0, x, y))), (w, h)), 1)
-
-        for i, r, l, a, b in onScreen:
-            x, y, z, d, w, h, = b
-            x, y = self.toScreen(self.worldToSurface((x, y, z+h)))
-            draw.rect(surface, (255,128,128), (x, y, w, h), 1)
-
-        surface.set_clip(clip)
-        return dirty
-
-
-    def worldToScreen(self, (x, y)):
-        """
-        Transform the world to coordinates on the screen
-        """
-
-        return (y - self.extent.left + self.rect.left,
-                x - self.extent.top + self.rect.top)
 
 
     def worldToSurface(self, (x, y, z)):
@@ -172,7 +150,8 @@ class LevelCamera(GameObject):
         z is the vertical plane
         """
 
-        return self.area.worldToPixel((x, y, z))
+        xx, yy = self.area.worldToPixel((x, y, z))
+        return vec.Vec2d(xx - self.extent.top, yy - self.extent.left)
 
 
     def surfaceToWorld(self, (x, y)):

@@ -44,11 +44,11 @@ class Animation(GameObject):
     TODO: implement some sort of timing, rather than relying on frames
     """
 
-    def __init__(self, filename, name, frames, directions=1, timing=100):
+    def __init__(self, image, name, frames, directions=1, timing=100):
 
         GameObject.__init__(self)
 
-        self.filename = filename
+        self.image = image
         self.name = name
         self.images = None
         self.directions = directions
@@ -86,7 +86,7 @@ class Animation(GameObject):
         if (self.images is not None) and (not force):
             return
 
-        image = res.loadImage(self.filename, 0, 0, 1)
+        image = self.image.load()
 
         iw, ih = image.get_size()
         tw = iw / self.real_frames
@@ -100,7 +100,8 @@ class Animation(GameObject):
                 try:
                     frame = image.subsurface((x, y, tw, th))
                 except ValueError as e:
-                    raise ValueError, self.filename
+                    msg = "Invalid tiles selected for image {}"
+                    raise ValueError, msg.format(self.image.filename)
                 self.images[(x/tw)+d*self.real_frames] = frame
             d += 1
 

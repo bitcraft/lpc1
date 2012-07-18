@@ -1,5 +1,7 @@
-from lib2d.objects import AvatarObject
+from lib2d.image import Image
 from lib2d import avatar, animation, res
+
+from entity import Entity
 
 # pygoap already has a nice action/object class
 from pygoap import actions
@@ -45,27 +47,13 @@ harden = hardenBuilder()
 
 
 
-class InteractiveObject(AvatarObject):
-    """
-    these objects supply a list of actions that other objects can call
-    """
 
-    def __init__(self, avatar, builders):
-        AvatarObject.__init__(self, avatar)
-        self.actionBuilders = builders
-
-
-    def queryActions(self, caller):
-        actions = []
-        for builder in self.actionBuilders:
-            actions.extend(builder.get_actions(caller, None))
-        return actions
 
 
 def Anvil():
     anvilAnimation = animation.StaticAnimation("anvil.png", 'idle')
     anvilAvatar = avatar.Avatar([anvilAnimation])
-    anvil = InteractiveObject(anvilAvatar, [harden])
+    anvil = Entity(anvilAvatar, [harden], Image("anvil.png"))
     return anvil
 
 

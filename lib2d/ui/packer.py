@@ -1,148 +1,65 @@
 from lib2d.ui.element import Element
-import pygame, collections
+import pygame, collections, itertools
 
 
-class Packer(Element):
-    def __init__(self):
-        self._rect = None
-        self.elements = collections.OrderedDict()
-        self.freespace = collections.OrderedDict()
 
-
-    def getElements(self):
-        return itertools.chain(self.elements.keys(), self.freespace.keys())
-
-
-    def getRect(self, element):
-        if self.elements.has_key(element):
-            return self.elements[element]
-
-        if self.freespace.has_key(element):
-            return self.freespace[element]
-
-
-    def setRect(self, element, rect):
-        if self.elements.has_key(element):
-            self.elements[element] = rect
-            return
-
-        if self.freespace.has_key(element):
-            self.freespace[element] = rect
-            return
-
-
-    def add(self, element, rect=None):
-        if rect:
-            self.freespace[element] = rect
-        else:
-            self.elements[rect] = None
-
-
-    def remove(self, element):
-        try:
-            del self.elements[element]
-        except:
-            pass
-
-        try:
-            del self.freespace[element]
-        except:
-            pass
-
-
-    def getRects(self):
-        """ Return a list of rects that represents the area of this """
-        raise NotImplementedError
-
-
-    def getLayout(self, rect=None):
-        if (not self._rect == rect) and (rect is not None):
-            self.onResize(rect)
-            self._rect = pygame.Rect(rect)
-
-        items = self.elements.items()
-        items.extend(self.freespace.items())
-        return items
-
-
-    def onResize(self, rect):
-        raise NotImplementedError
-
-
-    def getPosition(self, element):
-        return self.elements[element]
-
-
-class OpenPacker(Packer):
-    """
-    allows for freeform positioning of ui elements
-    """
-
-    def add(self, element, rect):
-        self.elements[element] = rect
-
-    def remove(self, element):
-        del self.elements[element]
-
-    def getRects(self):
-        return self.elements.values()
-
-    def onResize(self, rect):
-        self._rect = rect
-
-
-class GridPacker(Packer):
+class GridPacker(Element):
     """
     positions widgets in a grid
     """
 
     def __init__(self):
-        Packer.__init__(self)
-        self.order = []
+        Element.__init__(self)
+        self.ordered = []
+        self.free = collections.deque()
 
 
-    def add(self, element, rect=None):
-        if rect:
-            self.freespace[element] = rect
+    @property
+    def elements(self):
+        return itertools.chain(self.free, self.ordered)
+
+
+    def add(self, element, free=False):
+        if free:
+            self.free.appendleft(element)
         else:
-            self.order.append(element)
-            self.elements[element] = None
+            self.ordered.append(element)
 
 
     def remove(self, element):
-        super(GridPacker, self).remove(element)
         try:
-            self.order.remove(element)
+            self.ordered.remove(element)
+        except:
+            pass
+
+        try:
+            self.free.remove(element)
         except:
             pass
 
 
-    def getRects(self):
-        return list(self.order)
-
-
-    def onResize(self, rect):
+    def resize(self):
         """ resize the rects for the panes """
+        Element.resize(self)
 
-        if len(self.elements) == 1:
-            self.elements[self.order[0]] = pygame.Rect(rect)
+        if len(self.ordered) == 1:
+            self.ordered[0].rect = self.rect.copy()
 
-        elif len(self.elements) == 2:
+        elif len(self.ordered) == 2:
             w, h = self.rect.size
-            self.elements[self.order[0]] = pygame.Rect((0,0,w,h/2))
-            self.elements[self.order[1]] = pygame.Rect((0,h/2,w,h/2))
+            self.ordered[0].rect = pygame.Rect((0,0,w,h/2))
+            self.ordered[1].rect = pygame.Rect((0,h/2,w,h/2))
 
-        elif len(self.elements) == 3:
+        elif len(self.ordered) == 3:
             w, h = self.rect.size
-            self.elements[self.order[0]] = pygame.Rect((0,0,w,h/2))
-            self.elements[self.order[1]] = pygame.Rect((0,h/2,w/2,h/2))
-            self.elements[self.order[2]] = pygame.Rect((w/2,h/2,w/2,h/2))
+            self.ordered[0].rect = pygame.Rect((0,0,w,h/2))
+            self.ordered[1].rect = pygame.Rect((0,h/2,w/2,h/2))
+            self.ordered[2].rect = pygame.Rect((w/2,h/2,w/2,h/2))
 
-        elif len(self.elements) == 4:
+        elif len(self.ordered) == 4:
             w = self.rect.width / 2
             h = self.rect.height / 2
-            self.elements[self.order[0]] = pygame.Rect((0,0,w,h))
-            self.elements[self.order[1]] = pygame.Rect((w,0,w,h))
-            self.elements[self.order[2]] = pygame.Rect((0,h,w,h))
-            self.elements[self.order[3]] = pygame.Rect((w,h,w,h))
-
+            self.ordered[0].rect = pygame.Rect((0,0,w,h))
+            self.ordered[1].rect = pygame.Rect((w,0,w,h))
+            self.ordered[2].rect = pygame.Rect((0,h,w,h))
+            self.ordered[3].rect = pygame.Rect((w,h,w,h))
