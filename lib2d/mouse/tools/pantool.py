@@ -8,14 +8,25 @@ import pygame
 
 
 
+def buildActionMenu(element):
+    actions = element.avatar.queryActions(None)
+    if actions:
+        icons = [ GraphicIcon(element.frame, a.icon, None) for a in actions ]
+        menu = RoundMenu(element.frame, element)
+        menu.setIcons(icons)
+        return menu
+    else:
+        return None
+
+
 class PanTool(MouseTool, Element):
-    def __init__(self, parent):
+    def __init__(self, frame):
         MouseTool.__init__(self)
-        Element.__init__(self, parent)
+        Element.__init__(self, frame)
         self.drag_origin = None
         self.openMenu = None
-        self.focus_entity = None
-        self.entity_icon = None
+        self.focus_element = None
+        self.element_icon = None
 
 
     def load(self):
@@ -24,7 +35,7 @@ class PanTool(MouseTool, Element):
 
     def onClick(self, element, point, button):
 
-        if self.focus_entity is None:
+        if self.focus_element is None:
             if isinstance(element, VirtualMapElement):
                 if self.openMenu:
                     self.openMenu.close()
@@ -32,13 +43,14 @@ class PanTool(MouseTool, Element):
                 self.openMenu = testMenu(element)
                 self.openMenu.open(point)
 
+            # CLICKED ON AN ENTITY ELEMENT
             elif isinstance(element, VirtualAvatarElement):
-                self.onSelectEntity(element.avatar)
-                #actions = element.avatar.queryActions(None)
-                #icons = [ GraphicIcon(a.icon, None) for a in actions ]
-                #menu = RoundMenu(element)
-                #menu.setIcons(icons)
-                #menu.open(point)
+                self.onSelectElement(element)
+                menu = buildActionMenu(element)
+                if menu:
+                    self.openMenu.close()
+                    self.openMenu = menu
+                    self.openMenu.open(point)
 
             else:
                 element.onClick(point, button)
@@ -50,30 +62,28 @@ class PanTool(MouseTool, Element):
                     self.openMenu.close()
 
                 self.openMenu = movementMenu(element)
-                self.openMenu.focus_entity = self.focus_entity
+                self.openMenu.focus_element = self.focus_element
                 self.openMenu.open(point)
-                self.onSelectEntity(None)   # clear the focus
-
+                self.onSelectElement(None)   # clear the focus
 
             else:
-                self.onSelectEntity(None)   # clear the focus
+                self.onSelectElement(None)   # clear the focus
 
 
-    def onSelectEntity(self, entity=None):
-        self.focus_entity = entity
+    def onSelectElement(self, element=None):
+        self.focus_element = element
 
-        if self.entity_icon:
-            self.parent.removeElement(self.entity_icon)
-            self.entity_icon = None
+        if self.element_icon:
+            self.frame.removeElement(self.element_icon)
+            self.element_icon = None
 
-        if entity:
-            w, h = self.parent.rect.size
-            icon = GraphicIcon(entity.faceImage, None)
+        if element:
+            w, h = self.frame.rect.size
+            icon = GraphicIcon(element.frame, element.avatar.faceImage, None)
             icon.rect = pygame.Rect(w-32,0,32,32)
             icon.load()
-            self.parent.addElement(icon)
-            self.entity_icon = icon
-
+            element.frame.addElement(icon)
+            self.element_icon = icon
 
     def onDrag(self, element, point, button, origin):
         if isinstance(element, VirtualMapElement):
@@ -87,22 +97,19 @@ class PanTool(MouseTool, Element):
 
 
 
-def movementMenu(parent):
+def movementMenu(element):
     def closer(icon):
-        parent.parent.removeElement(icon)
+        icom.frame.removeElement(icon)
         icon.unload()
-
 
     def func(menu):
         import lib.blacksmith as b
         menu.close()
 
         camera = menu.parent.camera
-        body0 = camera.area.getBody(menu.focus_entity)
+        body0 = camera.area.getBody(menu.focus_element)
         endpoint = camera.surfaceToWorld(menu.anchor)
         path = camera.area.pathfind(body0.bbox.bottomcenter, endpoint)
-        print path 
-
 
         image = Image("path.png")
 
@@ -111,38 +118,34 @@ def movementMenu(parent):
             icon = GraphicIcon(image, closer)
             icon.load()
             icon.rect = pygame.Rect(x*16, y*16, 16, 16)
-            menu.parent.parent.addElement(icon) 
-
+            menu.frame.addElement(icon) 
 
     image = ImageTile("spellicons.png", tile=(20,3), tilesize=(32,32))
 
-    m = RoundMenu(parent)
+    m = RoundMenu(element.frame, element)
     a = GraphicIcon(image, func, [m])
     m.setIcons([a])
     return m
 
 
 
-def testMenu(parent):
+def testMenu(element):
     def func(menu):
         import lib.blacksmith as b
         menu.close()
 
         anvil = b.Anvil()
         anvil.loadAll()
-        x, y, z = menu.parent.camera.surfaceToWorld(menu.anchor)
-        x -= 16
-        y -= 16
-        menu.parent.camera.area.add(anvil)
-        menu.parent.camera.area.setPosition(anvil, (x, y, z))
-
+        pos = menu.element.camera.surfaceToWorld(menu.anchor) - (16, 16, 0)
+        menu.element.camera.area.add(anvil)
+        menu.element.camera.area.setPosition(anvil, pos)
 
     image = Image("grasp.png")
 
-    m = RoundMenu(parent)
-    a = GraphicIcon(image, func, [m])
-    b = GraphicIcon(image, func, [m])
-    c = GraphicIcon(image, func, [m])
-    d = GraphicIcon(image, func, [m])
+    m = RoundMenu(element.frame, element)
+    a = GraphicIcon(element.frame, image, func, [m])
+    b = GraphicIcon(element.frame, image, func, [m])
+    c = GraphicIcon(element.frame, image, func, [m])
+    d = GraphicIcon(element.frame, image, func, [m])
     m.setIcons([a,b,c,d])
     return m

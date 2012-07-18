@@ -3,8 +3,8 @@ from lib2d.ui.element import Element
 
 
 class Frame(Element):
-    def __init__(self, parent, packer):
-        Element.__init__(self, parent)
+    def __init__(self, frame, packer):
+        Element.__init__(self, frame)
         self.packer = packer
 
 

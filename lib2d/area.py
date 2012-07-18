@@ -6,7 +6,7 @@ from pygame import Rect
 from bbox import BBox
 from pathfinding import astar
 from lib2d.signals import *
-from vec import Vec2d
+from vec import Vec2d, Vec3d
 import math
 
 cardinalDirs = {"north": math.pi*1.5, "east": 0.0, "south": math.pi/2, "west": math.pi}
@@ -116,7 +116,7 @@ class AdventureMixin(object):
 
 
     def pixelToWorld(self, (x, y)):
-        return (y, x, 0)
+        return Vec3d(y, x, 0)
 
 
     def toRect(self, bbox):
@@ -719,8 +719,6 @@ class Area(AbstractArea, AdventureMixin):
         body = self.getBody(thing)
         body.oldbbox = body.bbox
         body.bbox = bbox
-
-
 
 
     def getOrientation(self, thing):

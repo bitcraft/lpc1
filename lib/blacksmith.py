@@ -1,4 +1,4 @@
-from lib2d.image import Image
+from lib2d.image import Image, ImageTile
 from lib2d import avatar, animation, res
 
 from entity import Entity
@@ -11,14 +11,10 @@ import pygame
 
 
 class TimedAction(actions.CallableAction):
-
     def __init__(self, caller, duration, **kwargs):
         super(TimedAction, self).__init__(caller, **kwargs)
         self.time = 0
         self.duration = duration
-        self.icon = res.loadTile("spellicons.png", (32,32), (6,10))
-        self.icon = pygame.transform.scale(self.icon, (16,16))
-
 
     def update(self, time):
         super(HardenAction, self).update(time)
@@ -27,16 +23,12 @@ class TimedAction(actions.CallableAction):
             self.finish()
 
 
-    def onFinish(self):
-        print self, "finished"
-
-
-
 
 # =====  ITEM: ANVIL  =========================================================
 
 class HardenAction(TimedAction):
-    icon = Image("anvil.png")
+    icon = ImageTile("spellicons.png", tile=(20,5), tilesize=(32,32))
+
 
 class hardenBuilder(actions.ActionBuilder):
     def get_actions(self, caller, bb):

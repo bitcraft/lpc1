@@ -1,3 +1,6 @@
+from vec import Vec3d
+
+
 def intersect(a, b):
     return (((a.back   >= b.back   and a.back   < b.front)   or
              (b.back   >= a.back   and b.back   < a.front))  and
@@ -123,7 +126,7 @@ class BBox(object):
         raise NotImplementedError
 
 
-    def normalize(self):
+    def normalized(self):
         """
         return a normalized bbox of this one
         """
@@ -222,22 +225,22 @@ class BBox(object):
 
     @property
     def origin(self):
-        return self._x, self._y, self._z
+        return Vec3d(self._x, self._y, self._z)
 
 
     @property
     def bottomcenter(self):
-        return self._x + self._d / 2, self._y + self._w / 2, self._z
+        return Vec3d(self._x+self._d/2, self._y+self._w/2, self._z)
 
 
     @property
     def topcenter(self):
-        return self._x + self._d / 2, self._y + self._w / 2, self._z + self._h
+        return Vec3d(self._x+self._d/2, self._y+self._w/2, self._z+self._h)
 
 
     @property
     def center(self):
-        return self._x + self._d / 2, self._y + self._w / 2, self._z + self._h /2
+        return Vec3d(self._x+self._d/2, self._y+self._w/2, self._z+self._h/2)
 
 
     @property

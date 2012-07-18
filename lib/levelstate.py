@@ -81,7 +81,7 @@ class LevelState(GameState):
     def activate(self):
         self.ui = LevelUI()
         vpm = ui.Frame(self.ui, ui.GridPacker())
-        vpm.addElement(ui.ViewPort(self.area))
+        vpm.addElement(ui.ViewPort(self.ui, self.area))
         self.ui.addElement(vpm)
         self.ui.rect = gfx.get_rect()
 

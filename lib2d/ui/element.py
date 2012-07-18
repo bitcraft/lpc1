@@ -3,10 +3,19 @@ import pygame
 
 
 class Element(object):
-    def __init__(self, parent=None):
-        self.parent = parent
+    """
+    an element must be attached to a frame
+    """
+
+    def __init__(self, frame=None):
+        self.frame = frame
         self.enabled = False
         self._rect = None
+
+        from lib2d import ui
+        if not isinstance(frame, ui.Frame) and frame is not None:
+            print self, frame
+            raise Exception
 
 
     @property

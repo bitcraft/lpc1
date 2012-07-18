@@ -27,8 +27,8 @@ class GraphicIcon(Element):
     TODO: cache the image so it isn't duplicated in memory
     """
 
-    def __init__(self, image, func, arg=[], kwarg={}, uses=1):
-        Element.__init__(self)
+    def __init__(self, frame, image, func, arg=[], kwarg={}, uses=1):
+        Element.__init__(self, frame)
         if arg == []: arg = [self]
         self.func = (func, arg, kwarg)
         self.uses = uses
@@ -74,8 +74,9 @@ class RoundMenu(Element):
     options as a circle of GraphicIcon objects
     """
 
-    def __init__(self, parent):
-        Element.__init__(self, parent)
+    def __init__(self, frame, element=None):
+        Element.__init__(self, frame)
+        self.element = element
         self.icons = []
         self.anchor = None
 
@@ -87,19 +88,19 @@ class RoundMenu(Element):
     def open(self, point):
         """ start the animation of the menu """
         self.enabled = True
-        self.anchor = point
+        self.anchor = point + self.element.rect.topleft
         tw, th = self.icons[0].image.get_size()
         w = tw * len(self.icons)
-        rect = pygame.Rect(point-(w/2,8), (tw, th))
+        rect = pygame.Rect(self.anchor-(w/2,8), (tw, th))
         for i, icon in enumerate(self.icons):
             icon.rect = rect.move(tw*i, 0)
-            self.parent.parent.addElement(icon)
+            self.frame.addElement(icon)
 
     def close(self):
         self.enabled = False
         for i in self.icons:
             i.unload()
-            self.parent.parent.removeElement(i)
+            self.frame.removeElement(i)
 
 
 class UserInterface(Frame):
@@ -242,8 +243,8 @@ class UserInterface(Frame):
 
 
 class VirtualAvatarElement(Element):
-    def __init__(self, parent, avatar):
-        Element.__init__(self, parent)
+    def __init__(self, frame, avatar):
+        Element.__init__(self, frame)
         self.avatar = avatar
 
     def draw(self, surface):
@@ -255,8 +256,8 @@ class VirtualAvatarElement(Element):
 
 
 class VirtualMapElement(Element):
-    def __init__(self, parent, camera):
-        Element.__init__(self, parent)
+    def __init__(self, frame, camera):
+        Element.__init__(self, frame)
         self.camera = camera
         self.oldExtent = camera.extent.copy()
         self.virtualElements = {}
@@ -278,9 +279,9 @@ class VirtualMapElement(Element):
             try:
                 e = self.virtualElements[a]
             except KeyError:
-                e = VirtualAvatarElement(self, a)
+                e = VirtualAvatarElement(self.frame, a)
                 self.virtualElements[a] = e
-                self.parent.packer.add(e)
+                self.frame.packer.add(e)
             finally:
                 e.rect = pygame.Rect(pos, (w, h))
                 
@@ -292,7 +293,7 @@ class VirtualMapElement(Element):
         
 
     def shift(self, (x, y)):
-        self.parent.packer.shift((x, y))
+        self.frame.shift((x, y))
 
 
 class ScrollingGridPacker(GridPacker):
@@ -313,8 +314,8 @@ class ViewPort(Frame):
     loadedAreas = []
 
 
-    def __init__(self, area, parent=None):
-        Frame.__init__(self, parent, ScrollingGridPacker())
+    def __init__(self, frame, area):
+        Frame.__init__(self, frame, ScrollingGridPacker())
         self.area = area
         self.map_element = None
 
@@ -325,6 +326,10 @@ class ViewPort(Frame):
             # load sounds from area
             #for filename in element.area.soundFiles:
             #    SoundMan.loadSound(filename)
+
+
+    def shift(self, (x, y)):
+        self.packer.shift((x, y))
 
 
     def resize(self):
