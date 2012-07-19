@@ -8,15 +8,15 @@ class Image(object):
     Surface class that is pickable.  :)
     """
 
-    def __init__(self, filename, alpha=False, colorkey=False):
+    def __init__(self, filename, *args, **kwargs):
         self.filename = filename
-        self.alpha = alpha
-        self.colorkey = colorkey
+        self.args = args
+        self.kwargs = kwargs
         self.loaded = False
 
     def load(self):
         self.loaded = True
-        return res.loadImage(self.filename, self.alpha, self.colorkey)
+        return res.loadImage(self.filename, *self.args, **self.kwargs)
 
 
 class ImageTile(object):

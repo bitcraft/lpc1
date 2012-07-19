@@ -15,7 +15,7 @@ class Element(object):
         from lib2d import ui
         if not isinstance(frame, ui.Frame) and frame is not None:
             print self, frame
-            raise Exception
+            raise Exception, "element does not have a frame set"
 
 
     @property

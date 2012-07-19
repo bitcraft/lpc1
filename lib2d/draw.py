@@ -32,26 +32,28 @@ class GraphicBox(object):
     load it, then draw it wherever needed
     """
 
-    def __init__(self, filename, hollow=False):
-        self.hollow = hollow
-
-        image = res.loadImage(filename, 0,0,1)
-        iw, self.th = image.get_size()
+    def __init__(self, image):
+        surface = image.load()
+        iw, self.th = surface.get_size()
         self.tw = iw / 9
         names = "nw ne sw se n e s w c".split()
-        tiles = [ image.subsurface((i*self.tw, 0, self.tw, self.th))
-                  for i in range(9) ]
-
-        if self.hollow:
-            ck = tiles[8].get_at((0,0))
-            [ t.set_colorkey(ck, RLEACCEL) for t in tiles ]
+        tiles = [ surface.subsurface((i*self.tw, 0, self.tw, self.th))
+                  for i in range(len(names)) ]
 
         self.tiles = dict(zip(names, tiles))
-        self.background = self.tiles['c'].get_at((0,0))
+        self.tiles['c'] = self.tiles['c'].convert_alpha()
 
-
-    def draw(self, surface, rect):
+    def draw(self, surface, rect, fill=False):
         ox, oy, w, h = Rect(rect)
+
+        if fill:
+            if isinstance(fill, int):
+                self.tiles['c'].set_alpha(fill)
+
+            p = product(range(ox, w-ox, self.tw),
+                        range(oy, h-oy, self.th))
+        
+            [ surface.blit(self.tiles['c'], (x, y)) for x, y in p ]
 
         for x in range(self.tw+ox, w-self.tw+ox, self.tw):
             surface.blit(self.tiles['n'], (x, oy))
@@ -60,12 +62,6 @@ class GraphicBox(object):
         for y in range(self.th+oy, h-self.th+oy, self.th):
             surface.blit(self.tiles['w'], (w-self.tw+ox, y))
             surface.blit(self.tiles['e'], (ox, y))
-
-        if not self.hollow:
-            p = product(range(self.tw+ox, w-self.tw+ox, self.tw),
-                        range(self.th+oy, h-self.th+oy, self.th))
-
-            [ surface.blit(self.tiles['c'], (x, y)) for x, y in p ]
 
         surface.blit(self.tiles['nw'], (ox, oy))
         surface.blit(self.tiles['ne'], (w-self.tw+ox, oy))

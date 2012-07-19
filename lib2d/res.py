@@ -102,9 +102,6 @@ def loadImage(name, alpha=False, colorkey=False, fake=False):
 
     elif colorkey:
         image = image.convert()
-        #if global_colorkey:
-        #    image.set_colorkey(global_colorkey, pygame.RLEACCEL)
-        #else:
         image.set_colorkey(image.get_at((0,0)), pygame.RLEACCEL)
     else:
         image = image.convert()

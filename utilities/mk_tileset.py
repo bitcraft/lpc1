@@ -63,10 +63,10 @@ colorsets.append(("DOOR", (255,255,255), (180,10,20)))
 colorsets.append(("ITEM", (255,255,255), (0,120,10)))
 
 # black on light-blue
-colorsets.append(("LIFT", (0,0,0), (200,200,255)))
+colorsets.append(("", (0,0,0), (200,200,255)))
 
 # black on light-pink
-colorsets.append(("LIFT SHAFT", (0,0,0), (255,200,200)))
+colorsets.append(("", (0,0,0), (255,200,200)))
 
 # black on light-green
 colorsets.append(("", (0,0,0), (200,255,200)))

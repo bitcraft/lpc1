@@ -3,6 +3,7 @@ from lib import world
 
 from lib2d.gamestate import GameState
 from lib2d.ui import Menu
+from lib2d.image import Image
 from lib2d.objects import loadObject
 from lib2d import res, draw
 
@@ -13,8 +14,7 @@ class InstructionScreen(GameState):
     def activate(self):
         self.foreground = (0,0,0)
         self.background = (109, 109, 109)
-        self.border = draw.GraphicBox("dialog2-h.png", hollow=True)
-        self.borderFilled = draw.GraphicBox("dialog2.png")
+        self.border = draw.GraphicBox("border0.png", hollow=True)
         self.msgFont = pygame.font.Font((res.fontPath("volter.ttf")), 9)
         self.activated = True
         self.redraw = True
@@ -37,11 +37,11 @@ class InstructionScreen(GameState):
 
 
 class TitleScreen(GameState):
+    borderImage = Image("lpc-border0.png", colorkey=True)
 
     def activate(self):
         self.background = (109, 109, 109)
-        self.border = draw.GraphicBox("dialog2-h.png", hollow=True)
-        self.borderFilled = draw.GraphicBox("dialog2.png")
+        self.border = draw.GraphicBox(self.borderImage)
         self.counter = 0
         self.game = None
         self.activated = True
@@ -84,10 +84,8 @@ class TitleScreen(GameState):
         if self.redraw:
             self.redraw = False
             if self.game:
-                self.border.draw(surface, surface.get_rect().inflate(5,5))
-            else:
+                self.border.draw(surface, surface.get_rect(), 200)
 
-                self.borderFilled.draw(surface, surface.get_rect().inflate(5,5))
         self.menu.draw(surface)
 
 

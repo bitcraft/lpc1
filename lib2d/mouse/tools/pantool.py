@@ -37,18 +37,17 @@ class PanTool(MouseTool, Element):
 
         if self.focus_element is None:
             if isinstance(element, VirtualMapElement):
-                if self.openMenu:
-                    self.openMenu.close()
+                if self.openMenu: self.openMenu.close()
 
                 self.openMenu = testMenu(element)
                 self.openMenu.open(point)
 
             # CLICKED ON AN ENTITY ELEMENT
             elif isinstance(element, VirtualAvatarElement):
+                if self.openMenu: self.openMenu.close()
                 self.onSelectElement(element)
                 menu = buildActionMenu(element)
                 if menu:
-                    self.openMenu.close()
                     self.openMenu = menu
                     self.openMenu.open(point)
 
@@ -58,17 +57,14 @@ class PanTool(MouseTool, Element):
         # THERE IS AN ENTITY FOCUSED
         else:
             if isinstance(element, VirtualMapElement):
-                if self.openMenu:
-                    self.openMenu.close()
+                if self.openMenu: self.openMenu.close()
 
-                self.openMenu = movementMenu(element)
-                self.openMenu.focus_element = self.focus_element
+                self.openMenu = movementMenu(element, self.focus_element)
                 self.openMenu.open(point)
                 self.onSelectElement(None)   # clear the focus
 
             else:
                 self.onSelectElement(None)   # clear the focus
-
 
     def onSelectElement(self, element=None):
         self.focus_element = element
@@ -97,17 +93,17 @@ class PanTool(MouseTool, Element):
 
 
 
-def movementMenu(element):
+def movementMenu(element, target):
     def closer(icon):
-        icom.frame.removeElement(icon)
+        icon.frame.removeElement(icon)
         icon.unload()
 
     def func(menu):
         import lib.blacksmith as b
         menu.close()
 
-        camera = menu.parent.camera
-        body0 = camera.area.getBody(menu.focus_element)
+        camera = menu.element.camera
+        body0 = camera.area.getBody(target.avatar)
         endpoint = camera.surfaceToWorld(menu.anchor)
         path = camera.area.pathfind(body0.bbox.bottomcenter, endpoint)
 
@@ -115,7 +111,7 @@ def movementMenu(element):
 
         for node in path:
             y, x = node
-            icon = GraphicIcon(image, closer)
+            icon = GraphicIcon(element.frame, image, closer)
             icon.load()
             icon.rect = pygame.Rect(x*16, y*16, 16, 16)
             menu.frame.addElement(icon) 
@@ -123,10 +119,9 @@ def movementMenu(element):
     image = ImageTile("spellicons.png", tile=(20,3), tilesize=(32,32))
 
     m = RoundMenu(element.frame, element)
-    a = GraphicIcon(image, func, [m])
+    a = GraphicIcon(element.frame, image, func, [m])
     m.setIcons([a])
     return m
-
 
 
 def testMenu(element):

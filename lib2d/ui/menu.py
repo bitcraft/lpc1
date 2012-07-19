@@ -82,9 +82,6 @@ class Menu(Element):
     
     """
 
-    move_sound = res.loadSound("bump0.wav")
-    select_sound = res.loadSound("select1.wav")
-
     def __init__(self, h_pad, v_pad, orientation, number, option_list,
         font=None, font_size=32, item_factory=OutlinedFactory, callback=None):
 
@@ -151,35 +148,26 @@ class Menu(Element):
         d = 0
 
         if key == K_DOWN:
-            self.move_sound.stop()
-            self.move_sound.play()
             if (o == 'vertical') and ((s + 1) % n != 0):
                 d = 1
             elif o == 'horizontal':
                 d = n
         elif key == K_UP:
-            self.move_sound.stop()
-            self.move_sound.play()
             if (o == 'vertical') and ((s) % n != 0):
                 d = -1
             elif o == 'horizontal':
                 d = -n
         elif key == K_RIGHT:
-            self.move_sound.stop()
-            self.move_sound.play()
             if o == 'vertical':
                 d = n
             elif (o == 'horizontal') and ((s + 1) % n != 0):
                 d = 1
         elif key == K_LEFT:
-            self.move_sound.stop()
-            self.move_sound.play()
             if o == 'vertical':
                 d = -n
             elif (o == 'horizontal') and ((s) % n != 0):
                 d = -1
         elif key == K_RETURN:
-            #self.select_sound.play()
             return [None], self.options[self.selection].callback()
 
         s += d
