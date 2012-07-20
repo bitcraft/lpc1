@@ -9,5 +9,13 @@ TO TESTERS:  just run 'run.py'.
 
 
 
+FAQ (without questions):
+No, this does not work with python 3.x.  Use python 2.6 or 2.7.
+There are no keyboard commands.
+There is no story.
+There is only one playable character.
+The character does not move yet.
+
+
 control and survive an alien outbreak using many characters at once!
 it's a multi-point and click adventure!™
