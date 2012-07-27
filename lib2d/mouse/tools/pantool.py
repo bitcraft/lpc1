@@ -103,9 +103,12 @@ def movementMenu(element, target):
         menu.close()
 
         camera = menu.element.camera
-        body0 = camera.area.getBody(target.avatar)
+        body = camera.area.getBody(target.avatar)
         endpoint = camera.surfaceToWorld(menu.anchor)
-        path = camera.area.pathfind(body0.bbox.bottomcenter, endpoint)
+        path = camera.area.pathfind(body.bbox.bottomcenter, endpoint)
+
+        #s = area.MovementSentinal(body, path)
+        #camera.area.add(s)
 
         image = Image("path.png")
 

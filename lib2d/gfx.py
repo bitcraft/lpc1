@@ -24,13 +24,13 @@ from pygame.transform import scale, scale2x
 from pygame.display import flip
 import pygame, os.path, pprint
 
-
-
 """
 a few utilities for making retro looking games by scaling the screen
 and providing a few functions for handling screen changes
 
 """
+
+threaded = 0
 
 DEBUG = False
 
@@ -51,11 +51,28 @@ hwsurface = False
 surface_flags = 0
 #surface_flags = pygame.RESIZABLE
 
+
+import threading
+import Queue
+class ScalingThread(threading.Thread):
+    def __init__(self, func, arg):
+        super(ScalingThread, self).__init__()
+        self.func = func
+        self.arg = arg
+        self.trigger = False
+        self.running = True
+
+    def run(self):
+        while self.running:
+            while not self.trigger:
+                pass
+            self.func(self.arg)
+
+
 def hardware_checks():
     """
     TODO: Do some tests to see if we can reliably use hardware sprites
     """
-
     pass
 
 
@@ -74,6 +91,10 @@ def update_display_scaled2x(dirty):
 def update_display_scaled(dirty):
     scale(screen, screen_dim, screen_surface)
     flip()
+
+def update_display_threaded(dirty):
+    global thread
+    thread.trigger = True
 
 def set_screen(dim, scale=1, transform=None):
 
@@ -96,7 +117,7 @@ def set_screen(dim, scale=1, transform=None):
 def set_scale(scale, transform="scale"):
     from pygame.surface import Surface
 
-    global pixelize, pix_scale, buffer_dim, screen, update_display, screen_surface, screen_dim
+    global pixelize, pix_scale, buffer_dim, screen, update_display, screen_surface, screen_dim, thread
 
     if transform == "scale2x":
         pix_scale = 2
@@ -104,6 +125,13 @@ def set_scale(scale, transform="scale"):
     elif transform == "scale":
         pix_scale = scale
         update_display = update_display_scaled
+
+
+    if threaded:
+        thread = ScalingThread(update_display, None)
+        update_display = update_display_threaded
+        thread.start()
+
 
     pixelize = True
     buffer_dim = tuple([ int(i / pix_scale) for i in screen_dim ])

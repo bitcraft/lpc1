@@ -1,5 +1,4 @@
 from vec import Vec3d
-import collections
 
 
 def intersect(a, b):
@@ -13,7 +12,7 @@ def intersect(a, b):
 # BUG: collisions on right side are not correct
 
 
-class BBox(tuple):
+class BBox(object):
     """
     Rect-like Immutable class for defining area in 3d space.
 
@@ -25,10 +24,9 @@ class BBox(tuple):
     work as expected.
     """
 
-    __slots__ = []
+    __slots__ = ['_x', '_y', '_z', '_d', '_w', '_h']
 
-
-    def __new__(cls, *arg):
+    def __init__(self, *arg):
         """
         arg can be another bbox object
         an object with a 'bbox' attribute
@@ -37,38 +35,61 @@ class BBox(tuple):
         a list of two tuples: (x, y, z), (d, w, h)
         """
 
-
         # hack!!!
         if len(arg) == 1:
             arg = arg[0]
 
         if isinstance(arg, BBox):
-            return tuple.__new__(cls, arg)
-
-        elif isinstance(arg, (list, tuple)):
+            self._x, self._y, self._z, self._d, self._w, self._h = arg
+        elif isinstance(arg, list) or isinstance(arg, tuple):
             if len(arg) == 2:
                 self._x, self._y, self._z = arg[0]
                 self._d, self._w, self._h = arg[1]
             elif len(arg) == 6:
-                return tuple.__new__(cls, arg)
+                self._x, self._y, self._z, self._d, self._w, self._h = arg
             else:
                 raise ValueError, arg
-
         elif hasattr(arg, 'bbox'):
             self._x, self._y, self._z, self._d, self._w, self._h = arg.bbox
-
         else:
-            raise ValueError, arg
+            try:
+                self._x, self._y, self._z, self._d, self._w, self._h = arg
+            except:
+                raise ValueError, arg
 
-        return tuple.__new__(cls, arg)
+
+    def __repr__(self):
+        return "<bbox: {} {} {} {} {} {}>".format(
+            self._x, self._y, self._z, self._d, self._w, self._h)
+
+ 
+    def __len__(self): return 6
+
+
+    def __getitem__(self, key):
+
+        if key == 0:
+            return self._x
+        elif key == 1:
+            return self._y
+        elif key == 2:
+            return self._z
+        elif key == 3:
+            return self._d
+        elif key == 4:
+            return self._w
+        elif key == 5:
+            return self._h
+        raise IndexError, key
+
 
     def copy(self):
         return BBox(self)
 
 
     def move(self, x, y, z):
-        return BBox(self[0] + x, self[1] + y, self[2] + z,
-                    self[3],     self[3],     self[5])
+        return BBox(self._x + x, self._y + y, self._z + z,
+                    self._d,     self._w,     self._h)
 
 
     def inflate(self, x, y, z):
@@ -214,30 +235,30 @@ class BBox(tuple):
 
 
     @property
-    def x(self):
-        return self[0]
-
-
-    @property
-    def y(self):
-        return self[1]
-
-
-    @property
-    def z(self):
-        return self[2]
-
-
-    @property
-    def depth(self):
-        return self[3]
-
-
-    @property
     def width(self):
-        return self[4]
+        return self._w
 
 
     @property
     def height(self):
-        return self[5]
+        return self._h
+
+
+    @property
+    def depth(self):
+        return self._d
+
+
+    @property
+    def x(self):
+        return self._x
+
+
+    @property
+    def y(self):
+        return self._y
+
+
+    @property
+    def z(self):
+        return self._z

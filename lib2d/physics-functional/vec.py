@@ -1,7 +1,6 @@
 ################## http://www.pygame.org/wiki/2DVectorClass ##################
 import operator
 import math
-from lib2d.utils import *
 
 
 class Vec3d(object):
@@ -12,9 +11,9 @@ class Vec3d(object):
 
     def __init__(self, x_or_tuple, y=None, z=None):
         if y is not None and z is not None:
-            self[0], self[1], self[3] = x_or_tuple, y, z
+            self[0], self[1], self._z = x_or_tuple, y, z
         elif len(x_or_tuple) == 3:
-            self[0], self[1], self[3] = x_or_tuple
+            self[0], self[1], self._z = x_or_tuple
         else:
             raise ValueError
 
@@ -27,35 +26,35 @@ class Vec3d(object):
         elif key == 1:
             return self[1]
         elif key == 2:
-            return self[3]
+            return self._z
         else:
             raise IndexError("Invalid subscript "+str(key)+" to Vec3d")
 
     # Addition
     def __add__(self, other):
         if isinstance(other, Vec3d):
-            return Vec3d(self[0]+other[0], self[1]+other[1], self[0]+other[0])
+            return Vec3d(self[0]+other.x, self[1]+other.y, self[0]+other.x)
         elif hasattr(other, "__getitem__"):
-            return Vec3d(self[0]+other[0], self[1]+other[1], self[3]+other[2])
+            return Vec3d(self[0]+other[0], self[1]+other[1], self._z+other[2])
         else:
-            return Vec3d(self[0] + other, self[1] + other, self[3] + other)
+            return Vec3d(self[0] + other, self[1] + other, self._z + other)
     __radd__ = __add__
 
     # Subtraction
     def __sub__(self, other):
         if isinstance(other, Vec3d):
-            return Vec3d(self[0]-other[0], self[1]-other[1], self[0]-other[0])
+            return Vec3d(self[0]-other.x, self[1]-other.y, self[0]-other.x)
         elif hasattr(other, "__getitem__"):
-            return Vec3d(self[0]-other[0], self[1]-other[1], self[3]-other[2])
+            return Vec3d(self[0]-other[0], self[1]-other[1], self._z-other[2])
         else:
-            return Vec3d(self[0] - other, self[1] - other, self[3] - other)
+            return Vec3d(self[0] - other, self[1] - other, self._z - other)
     def __rsub__(self, other):
         if isinstance(other, Vec3d):
-            return Vec3d(other[0]-self[0], other[1]-self[1], other.z - self[3])
+            return Vec3d(other.x-self[0], other.y-self[1], other.z - self._z)
         if (hasattr(other, "__getitem__")):
-            return Vec3d(other[0]-self[0], other[1]-self[1], other[2]-self[3])
+            return Vec3d(other[0]-self[0], other[1]-self[1], other[2]-self._z)
         else:
-            return Vec3d(other - self[0], other - self[1], other - self[3])
+            return Vec3d(other - self[0], other - self[1], other - self._z)
 
 
 
@@ -71,11 +70,11 @@ class Vec3d(object):
 
     @property
     def z(self):
-        return self[3]
+        return self._z
 
 
- 
-class Vec2d(list):
+
+class Vec2d(tuple):
     """2d vector class, supports vector and scalar operators,
        and also provides a bunch of high level functions
        """
@@ -85,30 +84,19 @@ class Vec2d(list):
         if isinstance(arg, (list, tuple)):
             l = len(arg)
             if l == 1:
-                return list.__new__(cls, *arg)
+                return tuple.__new__(cls, *arg)
             elif l == 2:
-                return list.__new__(cls, arg)
+                return tuple.__new__(cls, arg)
 
         raise TypeError
-
 
     @property
     def x(self):
         return self[0]
 
-    @x.setter
-    def x(self, value):
-        self[0] = value
-
     @property
     def y(self):
         return self[1]
-
-    
-    @y.setter
-    def y(self, value):
-        self[1] = value
-
 
  
     # String representaion (for debugging)
@@ -135,8 +123,8 @@ class Vec2d(list):
     def _o2(self, other, f):
         "Any two-operator operation where the left operand is a Vec2d"
         if isinstance(other, Vec2d):
-            return Vec2d(f(self[0], other[0]),
-                         f(self[1], other[1]))
+            return Vec2d(f(self[0], other.x),
+                         f(self[1], other.y))
         elif (hasattr(other, "__getitem__")):
             return Vec2d(f(self[0], other[0]),
                          f(self[1], other[1]))
@@ -165,68 +153,39 @@ class Vec2d(list):
  
     # Addition
     def __add__(self, other):
-        try:
+        if isinstance(other, Vec2d):
+            return Vec2d(self[0] + other.x, self[1] + other.y)
+        elif hasattr(other, "__getitem__"):
             return Vec2d(self[0] + other[0], self[1] + other[1])
-        except TypeError:
+        else:
             return Vec2d(self[0] + other, self[1] + other)
     __radd__ = __add__
- 
-    def __iadd__(self, other):
-        try:
-            self[0] += other[0]
-            self[1] += other[1]
-        except IndexError:
-            self[0] += other
-            self[1] += other
-        return self
  
     # Subtraction
     def __sub__(self, other):
         if isinstance(other, Vec2d):
-            return Vec2d(self[0] - other[0], self[1] - other[1])
+            return Vec2d(self[0] - other.x, self[1] - other.y)
         elif (hasattr(other, "__getitem__")):
             return Vec2d(self[0] - other[0], self[1] - other[1])
         else:
             return Vec2d(self[0] - other, self[1] - other)
     def __rsub__(self, other):
         if isinstance(other, Vec2d):
-            return Vec2d(other[0] - self[0], other[1] - self[1])
+            return Vec2d(other.x - self[0], other.y - self[1])
         if (hasattr(other, "__getitem__")):
             return Vec2d(other[0] - self[0], other[1] - self[1])
         else:
             return Vec2d(other - self[0], other - self[1])
-    def __isub__(self, other):
-        if isinstance(other, Vec2d):
-            self[0] -= other[0]
-            self[1] -= other[1]
-        elif (hasattr(other, "__getitem__")):
-            self[0] -= other[0]
-            self[1] -= other[1]
-        else:
-            self[0] -= other
-            self[1] -= other
-        return self
- 
-    # Multiplication
-    @memoize
-    def __mul__(self, other):
-        try:
-            return Vec2d(self[0]*other[0], self[1]*other[1])
-        except TypeError:
-            return Vec2d((self[0]*other, self[1]*other))
-    __rmul__ = __mul__
 
-    def __imul__(self, other):
+    # Multiplication
+    def __mul__(self, other):
         if isinstance(other, Vec2d):
-            self[0] *= other[0]
-            self[1] *= other[1]
-        elif (hasattr(other, "__getitem__")):
-            self[0] *= other[0]
-            self[1] *= other[1]
+            return Vec2d(self[0]*other[0], self[1]*other[1])
+        if (hasattr(other, "__getitem__")):
+            return Vec2d(self[0]*other[0], self[1]*other[1])
         else:
-            self[0] *= other
-            self[1] *= other
-        return self
+            return Vec2d(self[0]*other, self[1]*other)
+    __rmul__ = __mul__
  
     # Division
     def __div__(self, other):
@@ -315,15 +274,6 @@ class Vec2d(list):
         self[1] *= value/length
     length = property(get_length, __setlength, None, "gets or sets the magnitude of the vector")
  
-    def rotate(self, angle_degrees):
-        radians = math.radians(angle_degrees)
-        cos = math.cos(radians)
-        sin = math.sin(radians)
-        x = self[0]*cos - self[1]*sin
-        y = self[0]*sin + self[1]*cos
-        self[0] = x
-        self[1] = y
- 
     def rotated(self, angle_degrees):
         radians = math.radians(angle_degrees)
         cos = math.cos(radians)
@@ -337,12 +287,6 @@ class Vec2d(list):
             return 0
         return math.atan2(self[1], self[0])
 
-    def __setangle(self, angle_degrees):
-        self[0] = self.length
-        self[1] = 0
-        self.rotate(angle_degrees)
-    angle = property(get_angle, __setangle, None, "gets or sets the angle of a vector")
- 
     def get_angle_between(self, other):
         cross = self[0]*other[1] - self[1]*other[0]
         dot = self[0]*other[0] + self[1]*other[1]
@@ -399,5 +343,4 @@ class Vec2d(list):
     def __setstate__(self, dict):
         self[0], self[1] = dict
  
-    def __hash__(self):
-        return hash((self[0], self[1]))
+

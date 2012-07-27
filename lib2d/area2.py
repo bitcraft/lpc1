@@ -13,6 +13,31 @@ cardinalDirs = {"north": math.pi*1.5, "east": 0.0, "south": math.pi/2, "west": m
 
 
 
+def pathfind(self, start, destination):
+    """Pathfinding for the world.  Destinations are 'snapped' to tiles.
+    """
+
+    def NodeFactory(pos):
+        x, y = pos[:2]
+        l = 0
+        return Node((x, y))
+
+        try:
+            if self.tmxdata.getTileGID(x, y, l) == 0:
+                node = Node((x, y))
+            else:
+                return None
+        except:
+            return None
+        else:
+            return node
+
+    start = self.worldToTile(start)
+    destination = self.worldToTile(destination)
+    path = astar.search(start, destination, NodeFactory)
+    return path
+
+
 class PathfindingSentinel(object):
     """
     this object watches a body move and will adjust the movement as needed
@@ -26,7 +51,7 @@ class PathfindingSentinel(object):
         self.dy = 0
 
     def update(self, time):
-        if worldToTile(bbox.origin) == self.path[-1]:
+        if worldToTile(bbox.origin) = self.path[-1]:
             pos = path.pop()
             theta = math.atan2(self.destination[1], self.destination[0])
             self.destination = self.position + self.destination
@@ -54,7 +79,52 @@ class ExitTile(FrozenRect):
             self._value)
 
 
+class Body(object):
+    """
+    hashable, immutable class to simulate simple physics
+    """
 
+    def __init__(self, bbox, acc, vel, o, parent=None):
+        self.parent = parent
+        self.bbox = bbox
+        self.oldbbox = bbox
+        self.acc = acc
+        self.vel = vel
+        self.o = o
+        self._isFalling = False
+        self._sleeping = False
+
+    def __repr__(self):
+        if self.parent:
+            return "<Body: {}>".format(self.parent.name)
+        else:
+            return "<Body: {}>".format(self.parent)
+
+    @property
+    def gravity(self):
+        return self.parent.gravity
+
+
+    @property
+    def pushable(self):
+        try:
+            return self.parent.pushable
+        except AttributeError:
+            return True
+
+
+    @property
+    def isFalling(self):
+        return self._isFalling
+
+
+    @isFalling.setter
+    def isFalling(self, value):
+        self._isFalling = value
+        try:
+            self.parent.isFalling = value
+        except AttributeError:
+            pass
 
 
 class AbstractArea(GameObject):
@@ -122,9 +192,13 @@ class AdventureMixin(object):
 
     """
     the underlying physics 'engine' is only capable of calculating
-    physics on 2 axises.  so, we just calulate the xy plane and fake the z
+    physics on 2 axises.  so, we just calculate the xy plane and fake the z
     axis
     """
+    def applyForce(self, body, (x, y, z)):
+        body.acc += Vec2d(x, y)
+
+
     def updatePhysics(self, body, time):
         """
         basic physics
@@ -168,7 +242,7 @@ class AdventureMixin(object):
 
 class PlatformerMixin(object):
     """
-    Mixin class is suitable for platformer games
+    Mixin class is suitable for platform  games
     """
 
     def toRect(self, bbox):
@@ -178,7 +252,7 @@ class PlatformerMixin(object):
 
     """
     the underlying physics 'engine' is only capable of calculating 2 axises.
-    for playformer type games, we use the zy plane for calculations
+    for platform type games, we use the zy plane for calculations
     """
     def updatePhysics(self, body, time):
         """
@@ -207,17 +281,15 @@ class PlatformerMixin(object):
 
 
 class Area(AbstractArea, AdventureMixin):
-    """3D environment for things to live in.
+    """
+    3D environment for things to live in.
     Includes basic pathfinding, collision detection, among other things.
 
-    Uses a quadtree for fast collision testing with level geometry.
+    You will need to specify the appropriate 'mixin' class to get full features
 
-    Bodies can exits in layers, just like maps.  since the y values can
-    vary, when testing for collisions the y value will be truncated and tested
-    against the quadtree that is closest.  if there is no quadtree, no
-    collision testing will be done.
+    uses a quadtree for fast collision testing with level geometry.
 
-    There are a few hacks to be aware of:
+    there are a few hacks to be aware of:
         bodies move in 3d space, but level geometry is 2d space
         when using pygame rects, the y value maps to the z value in the area
 
@@ -226,26 +298,6 @@ class Area(AbstractArea, AdventureMixin):
         x axis moves toward viewer
         y axis move left right
         z axis is height
-
-    Expects to load a specially formatted TMX map created with Tiled.
-    Layers:
-        Control Tiles
-        Upper Partial Tiles
-        Lower Partial Tiles
-        Lower Full Tiles
-
-    Contains a very basic discrete collision system.
-
-    The control layer is where objects and boundries are placed.  It will not
-    be rendered.  Your map must not have any spaces that are open.  Each space
-    must have a tile in it.  Blank spaces will not be rendered properly and
-    will leave annoying trails on the screen.
-
-    The control layer must be created with the utility included with lib2d.  It
-    contains metadata that lib2d can use to layout and position objects
-    correctly.
-
-    REWRITE: FUNCTIONS HERE SHOULD NOT CHANGE STATE
 
     NOTE: some of the code is specific for maps from the tmxloader
     """
@@ -260,33 +312,21 @@ class Area(AbstractArea, AdventureMixin):
 
     def __init__(self):
         AbstractArea.__init__(self)
-        self.exits    = {}
-        self.geometry = {}       # geometry (for collisions) of each layer
-        self.bodies = {}         # hack
-        self.extent = None       # absolute boundries of the area
-        self.joins = []          # records simple joins between bodies
-        self.messages = []
-        self.time = 0
-        self.tmxdata = None
-        self.mappath = None
+        self.geometry = {}
+        self.bodies = {}
+        self.joins = []
         self.sounds = []
         self.soundFiles = []
         self.inUpdate = False
         self._addQueue = []
         self._removeQueue = []
         self._addQueue = []
-        self.drawables = []      # HAAAAKCCCCKCK
-        self.changedAvatars = True #hack
-        self._grounded = {}
-        self.music_pos = 0
 
-        self.flashes = []
-        self.inUpdate = False
-        self._removeQueue = []
+        import quadtree
+        self.geometry[layer] = quadtree.FastQuadTree(rects)
+        self.geoRect = rects
 
-        print "new area"
-
-
+    @classmethod
     def load(self):
         import pytmx
 
@@ -322,6 +362,8 @@ class Area(AbstractArea, AdventureMixin):
 
         #self.exitQT = QuadTree(rects)
 
+        return Area()
+
 
     def add(self, thing, pos=None):
         if pos is None:
@@ -351,8 +393,7 @@ class Area(AbstractArea, AdventureMixin):
             pass
 
 
-    def movePosition(self, body, (x, y, z), push=True, caller=None, \
-                     suppress_warp=False, clip=True):
+    def movePosition(self, body, (x, y, z), push=True, clip=True):
 
         """Attempt to move a body in 3d space.
 
@@ -371,7 +412,6 @@ class Area(AbstractArea, AdventureMixin):
             CollisionError  
 
 
-        You should catch the exception if body cannot move.
         This function will emit a bodyRelMove event if successful. 
         """
 
@@ -422,137 +462,9 @@ class Area(AbstractArea, AdventureMixin):
             else:
                 if clip: return False
 
-        body.oldbbox = body.bbox
-        body.bbox = newbbox
-
-        self._sendBodyMove(body, caller=caller)
-
-        bbox2 = newbbox.move(0,0,32)
-        tilePos = self.worldToTile(bbox2.topcenter)
-        try:
-            # emit sounds from bodies walking on them
-            prop = self.tmxdata.getTileProperties(tilePos)
-        except:
-            pass
-
         else:
-            if prop is not None:
-                name = prop.get('walkSound', False)
-                if name:
-                    self.emitSound(name, newbbox.bottomcenter, ttl=600)
-
-        try:
-            # test for collisions with exits
-            exits = self.exitQT.hit(self.toRect(newbbox))
-        except AttributeError:
-            exits = []
-
-
-        if exits and not suppress_warp:
-            # warp the player
-            exit = exits.pop()
-
-            # get the position and guid of the exit tile of the other map
-            fromExit, guid = self.exits[exit.value]
-            if guid is not None: 
-                # used to correctly align sprites
-                fromTileBBox = BBox(fromExit, (16,16,1))
-                tx, ty, tz = fromTileBBox.origin
-            
-                # get the GUID of the map we are warping to
-                dest = self.getRoot().getChildByGUID(guid)
-                toExit, otherExit = dest.exits[exit.value]
-
-                bx, by, bz = newbbox.origin
-                ox, oy, oz = originalbbox.origin
-                bz = 0
-
-                # determine wich direction we are traveling through the exit
-                angle = math.atan2(oy-by, ox-bx)
-
-                # get the position of the tile in out new area
-                newx, newy, newz = toExit
-
-                # create a a bbox to position the object in the new area
-                dx = 16 / 2 - newbbox.depth / 2
-                dy = 16 / 2 - newbbox.width / 2
-                dz = 0
-
-                exitbbox = BBox((newx+dx, newy+dy, newz+dz), newbbox.size)
-                face = self.getOrientation(body)
-                dest.add(body)
-                dest.setBBox(body, exitbbox)
-                dest.setOrientation(body, face)
-                
-                # when changing the destination, we do a bunch of moves first
-                # to push objects out of the way from the door...if possible
-                dx = round(math.cos(angle))
-                dy = round(math.sin(angle))
-                dz = 0
-                dest.movePosition(body, (dx*20, dy*20, dz*20), False, \
-                                  suppress_warp=True, clip=False)
-
-                for x in range(40):
-                    dest.movePosition(body, (-dx, -dy, -dz), True, \
-                                      suppress_warp=True, clip=False)
-
-                # send a signal that this body is warping
-                bodyWarp.send(sender=self, body=body, destination=dest,
-                              caller=caller)
-
-        return True 
-
-
-    def getBody(self, thing):
-        return self.bodies[thing]
-
-
-    def setOrientation(self, thing, angle):
-        """ Set the angle the object is facing.  Expects radians. """
-
-        if isinstance(angle, str):
-            try:
-                angle = cardinalDirs[angle]
-            except:
-                raise
-
-        self.getBody(thing).o = angle
-
-
-    def setLayerGeometry(self, layer, rects):
-        """
-        set the layer's geometry.  expects a list of rects.
-        """
-
-        import quadtree
-
-        self.geometry[layer] = quadtree.FastQuadTree(rects)
-        self.geoRect = rects
-
-
-    def pathfind(self, start, destination):
-        """Pathfinding for the world.  Destinations are 'snapped' to tiles.
-        """
-
-        def NodeFactory(pos):
-            x, y = pos[:2]
-            l = 0
-            return Node((x, y))
-
-            try:
-                if self.tmxdata.getTileGID(x, y, l) == 0:
-                    node = Node((x, y))
-                else:
-                    return None
-            except:
-                return None
-            else:
-                return node
-
-        start = self.worldToTile(start)
-        destination = self.worldToTile(destination)
-        path = astar.search(start, destination, NodeFactory)
-        return path
+            body.oldbbox = body.bbox
+            body.bbox = newbbox
 
 
     def emitText(self, text, pos=None, thing=None):
@@ -595,18 +507,12 @@ class Area(AbstractArea, AdventureMixin):
         self._removeQueue = []
 
 
-    def setExtent(self, rect):
-        self.extent = Rect(rect)
-
-
     def testCollideGeometry(self, bbox):
         """
         test if a bbox collides with the layer geometry
-
-        the geometry layer will be calculated from the z value
+        uses a quadtree to test static geometry
         """
 
-        # TODO: calc layer value
         layer = 0
 
         try:
@@ -624,6 +530,10 @@ class Area(AbstractArea, AdventureMixin):
 
 
     def testCollideObjects(self, bbox, skip=[]):
+        """
+        this could be optimized to use a quadtree,  spatial hash, etc
+        """
+
         bboxes = []
         bodies = []
 
@@ -635,37 +545,12 @@ class Area(AbstractArea, AdventureMixin):
         return [ bodies[i] for i in bbox.collidelistall(bboxes) ]
 
 
-    def testCollideGeometryAll(self):
-        # return list of all collisions between bodies and level geometry
-        pass
-
-
-    def getPositions(self):
-        return [ (o, b.origin) for (o, b) in self.bboxes.items() ]
-
-
-
-    def getOldPosition(self, body):
-        return self._oldbboxes[body]
-
-
     def _sendBodyMove(self, body, caller, force=None):
         position = body.bbox.origin
         bodyAbsMove.send(sender=self, body=body, position=position, caller=caller, force=force)
 
     
-    def warpBody(self):
-        """
-        move a body to another area using an exit tile.
-        objects on or around the tile will be push out of the way
-        if objects cannot be pushed, then the warp will fail
-        """
-        pass
-
-
-
     #  CLIENT API  --------------
-
 
     def join(self, body0, body1):
         self.joins.append((body0, body1))
@@ -675,56 +560,6 @@ class Area(AbstractArea, AdventureMixin):
         self.joins.remove((body0, body1))
 
 
-    def getRect(self, thing):
-        return self.toRect(self.bodies[thing].bbox)
-
-
-    def isGrounded(self, thing):
-        return self.grounded(self.bodies[thing])
-
-
-    def getBBox(self, thing):
-        return self.bodies[thing].bbox
-
-
-    def setBBox(self, thing, bbox):
-        """ Attempt to set a bodies bbox.  Returns True if able. """
-
-        if not isinstance(bbox, BBox):
-            bbox = BBox(bbox)
-
-        body = self.getBody(thing)
-        body.oldbbox = body.bbox
-        body.bbox = bbox
-
-
-    def getOrientation(self, thing):
-        """ Return the angle thing is facing in radians """
-        return self.bodies[thing].o
-
-
-    def setPosition(self, thing, origin):
-        body = self.bodies[thing]
-        body.bbox = BBox(origin, body.bbox.size)
-
-
-    def getSize(self, thing):
-        """ Return 3d size of the object """
-        return self.bodies[thing].bbox.size
-
-
-    def getPosition(self, thing):
-        """ for clients to find position in world of things, not bodies """
-        return self.bodies[thing].bbox.origin
-
-
     def getBody(self, thing):
         return self.bodies[thing]
 
-
-    def stick(self, body):
-        pass
-
-
-    def unstick(self, body):
-        pass

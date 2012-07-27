@@ -24,10 +24,15 @@ class Node(object):
     def __repr__(self):
         return "<Node: x={} y={}>".format(self.x, self.y)
 
+#def getSurrounding(node):
+#    return ((node.x-1, node.y-1), (node.x, node.y-1), (node.x+1, node.y-1), \
+#            (node.x-1, node.y),   (node.x+1, node.y), \
+#            (node.x-1, node.y+1), (node.x, node.y+1), (node.x+1, node.y+1))
+
 def getSurrounding(node):
-    return ((node.x-1, node.y-1), (node.x, node.y-1), (node.x+1, node.y-1), \
+    return ((node.x, node.y-1), \
             (node.x-1, node.y),   (node.x+1, node.y), \
-            (node.x-1, node.y+1), (node.x, node.y+1), (node.x+1, node.y+1))
+            (node.x, node.y+1))
 
 def dist(start, finish):
     return abs(finish.x - start.x) + abs(finish.y - start.y)

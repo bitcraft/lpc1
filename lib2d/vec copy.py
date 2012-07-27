@@ -1,24 +1,101 @@
 ################## http://www.pygame.org/wiki/2DVectorClass ##################
 import operator
 import math
- 
+
+
+class Vec3d(object):
+    """
+    3d vector class.  Not complete.
+    """
+    __slots__ = ['_x', '_y', '_z']
+
+    def __init__(self, x_or_tuple, y=None, z=None):
+        if y is not None and z is not None:
+            self._x, self._y, self._z = x_or_tuple, y, z
+        elif len(x_or_tuple) == 3:
+            self._x, self._y, self._z = x_or_tuple
+        else:
+            raise ValueError
+
+    def __len__(self):
+        return 3
+
+    def __getitem__(self, key):
+        if key == 0:
+            return self._x
+        elif key == 1:
+            return self._y
+        elif key == 2:
+            return self._z
+        else:
+            raise IndexError("Invalid subscript "+str(key)+" to Vec3d")
+
+    # Addition
+    def __add__(self, other):
+        if isinstance(other, Vec3d):
+            return Vec3d(self._x+other.x, self._y+other.y, self._x+other.x)
+        elif hasattr(other, "__getitem__"):
+            return Vec3d(self._x+other[0], self._y+other[1], self._z+other[2])
+        else:
+            return Vec3d(self._x + other, self._y + other, self._z + other)
+    __radd__ = __add__
+
+    # Subtraction
+    def __sub__(self, other):
+        if isinstance(other, Vec3d):
+            return Vec3d(self._x-other.x, self._y-other.y, self._x-other.x)
+        elif hasattr(other, "__getitem__"):
+            return Vec3d(self._x-other[0], self._y-other[1], self._z-other[2])
+        else:
+            return Vec3d(self._x - other, self._y - other, self._z - other)
+    def __rsub__(self, other):
+        if isinstance(other, Vec3d):
+            return Vec3d(other.x-self._x, other.y-self._y, other.z - self._z)
+        if (hasattr(other, "__getitem__")):
+            return Vec3d(other[0]-self._x, other[1]-self._y, other[2]-self._z)
+        else:
+            return Vec3d(other - self._x, other - self._y, other - self._z)
+
+
+
+    @property
+    def x(self):
+        return self._x
+
+
+    @property
+    def y(self):
+        return self._y
+
+
+    @property
+    def z(self):
+        return self._z
+
+
+
 class Vec2d(object):
-    """
-    Immutable 2d vector class, supports vector and scalar operators,
-    and also provides provides other high level functions.
-
-    Based on module from: http://www.pygame.org/wiki/2DVectorClass
-    Modified 2012, leif.theden@gmail.com
-    """
-
+    """2d vector class, supports vector and scalar operators,
+       and also provides a bunch of high level functions
+       """
     __slots__ = ['_x', '_y']
  
     def __init__(self, x_or_pair, y = None):
         if y is None:
-            self._x, self._y  = x_or_pair
+            self._x = x_or_pair[0]
+            self._y = x_or_pair[1]
         else:
             self._x = x_or_pair
             self._y = y
+
+    @property
+    def x(self):
+        return self._x
+
+    @property
+    def y(self):
+        return self._y
+
  
     def __len__(self):
         return 2
@@ -108,7 +185,7 @@ class Vec2d(object):
             return Vec2d(other[0] - self._x, other[1] - self._y)
         else:
             return Vec2d(other - self._x, other - self._y)
- 
+
     # Multiplication
     def __mul__(self, other):
         if isinstance(other, Vec2d):
@@ -119,22 +196,27 @@ class Vec2d(object):
             return Vec2d(self._x*other, self._y*other)
     __rmul__ = __mul__
  
- 
     # Division
     def __div__(self, other):
         return self._o2(other, operator.div)
     def __rdiv__(self, other):
         return self._r_o2(other, operator.div)
+    def __idiv__(self, other):
+        return self._io(other, operator.div)
  
     def __floordiv__(self, other):
         return self._o2(other, operator.floordiv)
     def __rfloordiv__(self, other):
         return self._r_o2(other, operator.floordiv)
+    def __ifloordiv__(self, other):
+        return self._io(other, operator.floordiv)
  
     def __truediv__(self, other):
         return self._o2(other, operator.truediv)
     def __rtruediv__(self, other):
         return self._r_o2(other, operator.truediv)
+    def __itruediv__(self, other):
+        return self._io(other, operator.floordiv)
  
     # Modulo
     def __mod__(self, other):
@@ -195,6 +277,11 @@ class Vec2d(object):
  
     def get_length(self):
         return math.sqrt(self._x**2 + self._y**2)
+    def __setlength(self, value):
+        length = self.get_length()
+        self._x *= value/length
+        self._y *= value/length
+    length = property(get_length, __setlength, None, "gets or sets the magnitude of the vector")
  
     def rotated(self, angle_degrees):
         radians = math.radians(angle_degrees)
@@ -258,5 +345,11 @@ class Vec2d(object):
  
     def convert_to_basis(self, x_vector, y_vector):
         return Vec2d(self.dot(x_vector)/x_vector.get_length_sqrd(), self.dot(y_vector)/y_vector.get_length_sqrd())
+ 
+    def __getstate__(self):
+        return [self._x, self._y]
+ 
+    def __setstate__(self, dict):
+        self._x, self._y = dict
  
 
