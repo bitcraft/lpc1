@@ -1,2 +1,2 @@
 import physicsbody
-from physicsgroup import PhysicsGroup
+from physicsgroup import *

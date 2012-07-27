@@ -29,25 +29,16 @@ class PhysicsTest(context.Context):
             bodies.append(cube)
             geometry.append(pygame.Rect(y*2,0,2,10))
 
-        self.group = PhysicsGroup(0.006, (0,9.8), bodies, geometry)
+        self.group = PlatformerPhysicsGroup(1, 0.006, (0,-9.8), bodies, geometry)
 
 
     def draw(self, surface):
         w, h = surface.get_size()
-        tempdirty = collections.deque([])
 
         surface.lock()
-        for color, dirty in self.dirty:
-            for rect in dirty:
-                pygame.draw.rect(surface, (color*2,color*4,color*6), rect)
+        [ pygame.draw.rect(surface, (0,0,0), rect) for rect in self.dirty ]
 
-            if color > 0:
-                color -= 16
-                tempdirty.appendleft((color, dirty))
-
-        self.dirty = tempdirty
-
-        dirty = []
+        self.dirty = []
         for body in self.group:
             rect = translate(body.bbox).move(xshift, yshift)
             z =  math.sin(self.time/400.0*math.pi) / math.pi * 32 + 16
@@ -60,19 +51,15 @@ class PhysicsTest(context.Context):
             if z > 92: z = 92
 
             pygame.draw.rect(surface, (255-y,z*3,x), rect)
-            dirty.append(rect)
-            #rect = self.group.toRect(body.bbox)
-            #pygame.draw.rect(surface, (y,z,x), rect)
-            #print rect
+            self.dirty.append(rect)
 
         surface.unlock()
-        self.dirty.appendleft((32, dirty))
 
 
     def impulse(self):
         for body in self.group.dynamicBodies():
             if body.acc.y == 0:
-                body.vel.y = random.triangular(0,2)
+                body.vel.y = round(random.triangular(0,2), self.group.precision)
                 self.group.wakeBody(body)
 
 

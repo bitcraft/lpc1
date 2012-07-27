@@ -47,20 +47,21 @@ class BBox(tuple):
 
         elif isinstance(arg, (list, tuple)):
             if len(arg) == 2:
-                self._x, self._y, self._z = arg[0]
-                self._d, self._w, self._h = arg[1]
+                self[0], self[1], self[2] = arg[0]
+                self[3], self[4], self[5] = arg[1]
             elif len(arg) == 6:
                 return tuple.__new__(cls, arg)
             else:
                 raise ValueError, arg
 
         elif hasattr(arg, 'bbox'):
-            self._x, self._y, self._z, self._d, self._w, self._h = arg.bbox
+            self[0], self[1], self[2], self[3], self[4], self[5] = arg.bbox
 
         else:
             raise ValueError, arg
 
         return tuple.__new__(cls, arg)
+
 
     def copy(self):
         return BBox(self)
@@ -72,8 +73,13 @@ class BBox(tuple):
 
 
     def inflate(self, x, y, z):
-        return BBox((self._x - x / 2, self._y - y / 2, self._z - z / 2,
-                     self._d + x,     self._w + y,     self._h + z))
+        return BBox((self[0] - x / 2, self[1] - y / 2, self[2] - z / 2,
+                     self[3] + x,     self[4] + y,     self[5] + z))
+
+
+    def scale(self, x, y, z):
+        return BBox(self[0] * x, self[1] * y, self[2] * z,
+                    self[3] * x, self[4] * y, self[5] * z)
 
 
     def clamp(self):
@@ -117,21 +123,21 @@ class BBox(tuple):
         raise NotImplementedError
         other = BBox(other)
         # this is not correct!
-        return ((self._x <= other.back) and
-                (self._y <= other.top) and
-                (self._z <= other.front) and
-                (self._x + self._w >= other.right) and
-                (self._y + self._h >= other.bottom) and
-                (self._z + self._d >= other.back) and
-                (self._x + self._w > other.left) and
-                (self._y + self._h > other.top) and
-                (self._z + self._d > other.front))
+        return ((self[0] <= other.back) and
+                (self[1] <= other.top) and
+                (self[2] <= other.front) and
+                (self[0] + self[4] >= other.right) and
+                (self[1] + self[5] >= other.bottom) and
+                (self[2] + self[3] >= other.back) and
+                (self[0] + self[4] > other.left) and
+                (self[1] + self[5] > other.top) and
+                (self[2] + self[3] > other.front))
 
 
     def collidepoint(self, (x, y, z)):
-        return (x >= self._x and x < self._x + self._d and 
-                y >= self._y and y < self._y + self._w and
-                z >= self._z and z < self._z + self._h)
+        return (x >= self[0] and x < self[0] + self[3] and 
+                y >= self[1] and y < self[1] + self[4] and
+                z >= self[2] and z < self[2] + self[5])
 
 
     def collidebbox(self, other):
@@ -160,57 +166,57 @@ class BBox(tuple):
 
     @property
     def back(self):
-        return self._x
+        return self[0]
 
 
     @property
     def left(self):
-        return self._y
+        return self[1]
 
 
     @property
     def bottom(self):
-        return self._z
+        return self[2]
 
 
     @property
     def front(self):
-        return self._x + self._d
+        return self[0] + self[3]
 
 
     @property
     def right(self):
-        return self._y + self._w
+        return self[1] + self[4]
 
 
     @property
     def top(self):
-        return self._z + self._h
+        return self[2] + self[5]
 
 
     @property
     def size(self):
-        return self._d, self._w, self._h
+        return self[3], self[4], self[5]
 
 
     @property
     def origin(self):
-        return Vec3d(self._x, self._y, self._z)
+        return Vec3d(self[0], self[1], self[2])
 
 
     @property
     def bottomcenter(self):
-        return Vec3d(self._x+self._d/2, self._y+self._w/2, self._z)
+        return Vec3d(self[0]+self[3]/2, self[1]+self[4]/2, self[2])
 
 
     @property
     def topcenter(self):
-        return Vec3d(self._x+self._d/2, self._y+self._w/2, self._z+self._h)
+        return Vec3d(self[0]+self[3]/2, self[1]+self[4]/2, self[2]+self[5])
 
 
     @property
     def center(self):
-        return Vec3d(self._x+self._d/2, self._y+self._w/2, self._z+self._h/2)
+        return Vec3d(self[0]+self[3]/2, self[1]+self[4]/2, self[2]+self[5]/2)
 
 
     @property
