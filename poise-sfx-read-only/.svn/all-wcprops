@@ -1,0 +1,101 @@
+K 25
+svn:wc:ra_dav:version-url
+V 22
+/svn/!svn/ver/66/trunk
+END
+test-pygame.py
+K 25
+svn:wc:ra_dav:version-url
+V 37
+/svn/!svn/ver/40/trunk/test-pygame.py
+END
+setup.py
+K 25
+svn:wc:ra_dav:version-url
+V 30
+/svn/!svn/ver/2/trunk/setup.py
+END
+WaveFile.py
+K 25
+svn:wc:ra_dav:version-url
+V 34
+/svn/!svn/ver/44/trunk/WaveFile.py
+END
+envelope.pyx
+K 25
+svn:wc:ra_dav:version-url
+V 34
+/svn/!svn/ver/5/trunk/envelope.pyx
+END
+lib.py
+K 25
+svn:wc:ra_dav:version-url
+V 29
+/svn/!svn/ver/45/trunk/lib.py
+END
+test-wav.py
+K 25
+svn:wc:ra_dav:version-url
+V 34
+/svn/!svn/ver/52/trunk/test-wav.py
+END
+osc.pyx
+K 25
+svn:wc:ra_dav:version-url
+V 30
+/svn/!svn/ver/54/trunk/osc.pyx
+END
+envelope.py
+K 25
+svn:wc:ra_dav:version-url
+V 34
+/svn/!svn/ver/44/trunk/envelope.py
+END
+poise.py
+K 25
+svn:wc:ra_dav:version-url
+V 31
+/svn/!svn/ver/65/trunk/poise.py
+END
+test-pyglet.py
+K 25
+svn:wc:ra_dav:version-url
+V 37
+/svn/!svn/ver/66/trunk/test-pyglet.py
+END
+COPYING
+K 25
+svn:wc:ra_dav:version-url
+V 30
+/svn/!svn/ver/51/trunk/COPYING
+END
+func.pyx
+K 25
+svn:wc:ra_dav:version-url
+V 31
+/svn/!svn/ver/54/trunk/func.pyx
+END
+osc.py
+K 25
+svn:wc:ra_dav:version-url
+V 29
+/svn/!svn/ver/53/trunk/osc.py
+END
+buffers.pyx
+K 25
+svn:wc:ra_dav:version-url
+V 33
+/svn/!svn/ver/5/trunk/buffers.pyx
+END
+PygletSource.py
+K 25
+svn:wc:ra_dav:version-url
+V 38
+/svn/!svn/ver/65/trunk/PygletSource.py
+END
+Makefile
+K 25
+svn:wc:ra_dav:version-url
+V 30
+/svn/!svn/ver/6/trunk/Makefile
+END

@@ -6,14 +6,25 @@ from lib2d import res, ui, gfx, context
 import pygame, math, time, random, collections
 
 
-zoom = 1.0
+zoom = 1
 xshift = 10 * zoom
-yshift = 140 * zoom
+yshift = 250 * zoom
 
 
+
+background = (192,192,192)
+
+
+# platform games (yz plane)
+def translate2(bbox):
+    return pygame.Rect(bbox[1]*zoom, -bbox[2]*zoom-bbox.height*zoom,
+                       bbox[4]*zoom, bbox[5]*zoom)
+
+
+# adventure games (xy plane + z)
 def translate(bbox):
-    return pygame.Rect(bbox.y*zoom, -bbox.z*zoom-bbox.height*zoom,
-                       bbox.width*zoom, bbox.height*zoom)
+    return pygame.Rect(bbox[1]*zoom, -bbox[0]*zoom-bbox.depth*zoom-bbox[2]/2,
+                       bbox[4]*zoom, bbox[3]*zoom)
 
 
 class PhysicsTest(context.Context):
@@ -22,21 +33,30 @@ class PhysicsTest(context.Context):
         geometry = []
         self.dirty = collections.deque([])
         self.time = 0
+        self.blank = True
 
         width = 240
         for y in range(0, width/2):
-            cube = physicsbody.Body((0,y*2,y+40,2,1,4), (0,0), (0,0), 0)
+            cube = physicsbody.Body3((y,y*2,y+40,2,2,4), (0,0,0), (0,0,0), 0)
             bodies.append(cube)
-            geometry.append(pygame.Rect(y*2,0,2,10))
+        
+        geometry.append(bbox.BBox((0,0,0,2,width,0)))
+        geometry.append(bbox.BBox((0,0,0,width,2,0)))
+        geometry.append(bbox.BBox((0,width,0,width,2,0)))
+        geometry.append(bbox.BBox((width,0,0,2,width,0)))
 
-        self.group = PlatformerPhysicsGroup(1, 0.006, (0,-9.8), bodies, geometry)
+        self.group = AdventurePhysicsGroup(1, 0.006, -9.8, bodies, geometry)
 
 
     def draw(self, surface):
+        if self.blank:
+            surface.fill(background)
+            self.blank = False
+
         w, h = surface.get_size()
 
         surface.lock()
-        [ pygame.draw.rect(surface, (0,0,0), rect) for rect in self.dirty ]
+        [ pygame.draw.rect(surface, background, rect) for rect in self.dirty ]
 
         self.dirty = []
         for body in self.group:
@@ -50,16 +70,22 @@ class PhysicsTest(context.Context):
             if y > 255: y = 255
             if z > 92: z = 92
 
-            pygame.draw.rect(surface, (255-y,z*3,x), rect)
-            self.dirty.append(rect)
+            # draw shadow
+            if body.bbox.z > 0:
+                shadow = rect.move(0, body.bbox.z/2)
+                self.dirty.append(pygame.draw.rect(surface, (0,0,0), shadow))
+
+            self.dirty.append(pygame.draw.rect(surface, (255-y,z*3,x), rect)) 
 
         surface.unlock()
 
 
     def impulse(self):
         for body in self.group.dynamicBodies():
-            if body.acc.y == 0:
-                body.vel.y = round(random.triangular(0,2), self.group.precision)
+            if body.acc.z == 0:
+                body.vel.x = round(random.triangular(-.5,.5), self.group.precision)
+                body.vel.y = round(random.triangular(-.5,.5), self.group.precision)
+                body.vel.z = round(random.triangular(0,1.5), self.group.precision)
                 self.group.wakeBody(body)
 
 

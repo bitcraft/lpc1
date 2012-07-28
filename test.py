@@ -9,7 +9,7 @@ profile = 1
 class TestGame(Game):
     def start(self):
         from lib.physicstest import PhysicsTest
-        gfx.set_screen((1024, 600), 4, "scale")
+        gfx.set_screen((1024, 600), 2, "scale")
         self.sd = context.ContextDriver(self, [], 60)
         self.sd.reload_screen()
         self.sd.start(PhysicsTest(self.sd))

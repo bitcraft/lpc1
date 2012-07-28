@@ -13,11 +13,13 @@ def intersect(a, b):
 # BUG: collisions on right side are not correct
 
 
-class BBox(list):
+class BBox(tuple):
     """
-    Rect-like class for defining area in 3d space.
+    Rect-like Immutable class for defining area in 3d space.
 
-    Not hashable.
+    Once created cannot be modified.
+    Operations that would change the bbox will return a new one.
+    Hashable.
 
     Many of the methods here have not been extensively tested, but most should
     work as expected.
@@ -41,14 +43,14 @@ class BBox(list):
             arg = arg[0]
 
         if isinstance(arg, BBox):
-            return list.__new__(cls, arg)
+            return tuple.__new__(cls, arg)
 
         elif isinstance(arg, (list, tuple)):
             if len(arg) == 2:
                 self[0], self[1], self[2] = arg[0]
                 self[3], self[4], self[5] = arg[1]
             elif len(arg) == 6:
-                return list.__new__(cls, arg)
+                return tuple.__new__(cls, arg)
             else:
                 raise ValueError, arg
 
@@ -58,7 +60,7 @@ class BBox(list):
         else:
             raise ValueError, arg
 
-        return list.__new__(cls, arg)
+        return tuple.__new__(cls, arg)
 
 
     def copy(self):
@@ -66,27 +68,18 @@ class BBox(list):
 
 
     def move(self, x, y, z):
-        self[0] += x
-        self[1] += y
-        self[2] += z
+        return BBox(self[0] + x, self[1] + y, self[2] + z,
+                    self[3],     self[3],     self[5])
 
 
     def inflate(self, x, y, z):
-        self[0] -= x / 2
-        self[1] -= y / 2
-        self[2] -= z / 2
-        self[3] += x
-        self[4] += y
-        self[5] += z
+        return BBox((self[0] - x / 2, self[1] - y / 2, self[2] - z / 2,
+                     self[3] + x,     self[4] + y,     self[5] + z))
 
 
     def scale(self, x, y, z):
-        self[0] *= x
-        self[1] *= y
-        self[2] *= z
-        self[3] *= x
-        self[4] *= y
-        self[5] *= z
+        return BBox(self[0] * x, self[1] * y, self[2] * z,
+                    self[3] * x, self[4] * y, self[5] * z)
 
 
     def clamp(self):
