@@ -23,7 +23,7 @@ def translate2(bbox):
 
 # adventure games (xy plane + z)
 def translate(bbox):
-    return pygame.Rect(bbox[1]*zoom, -bbox[0]*zoom-bbox.depth*zoom-bbox[2]/2,
+    return pygame.Rect(bbox[1]*zoom, -bbox[0]*zoom-bbox.depth*zoom-bbox[2],
                        bbox[4]*zoom, bbox[3]*zoom)
 
 
@@ -72,7 +72,7 @@ class PhysicsTest(context.Context):
 
             # draw shadow
             if body.bbox.z > 0:
-                shadow = rect.move(0, body.bbox.z/2)
+                shadow = rect.move(0, body.bbox.z)
                 self.dirty.append(pygame.draw.rect(surface, (0,0,0), shadow))
 
             self.dirty.append(pygame.draw.rect(surface, (255-y,z*3,x), rect)) 

@@ -29,7 +29,6 @@ class PlatformerMixin(object):
         """
         def frange(start, end, step):
             while start <= end:
-                print start
                 yield start
                 start = round(start + step, self.precision)
 
@@ -85,59 +84,38 @@ class AdventureMixin(object):
         return physicsbody.Body3(newbbox, (0,0,0), (0,0,0), 0)
 
 
-    def precompute(self, start, end, step):
-        """
-        run through various values to fill the vector cache with useful
-        values
-        """
-        def frange(start, end, step):
-            while start <= end:
-                yield start
-                start = round(start + step, self.precision)
-
-
-        for x in frange(start, end, step):
-            vec.Vec2d((0, x)) * self.timestep
-
-
     def update(self, time):
         for body in (b for b in self.bodies if b not in self.sleeping):
             body.acc += self.gravity_delta
-
-            # rounding improves memoization at expense of accuracy
-            #body.acc.y = round(body.acc.y, self.precision)
             body.vel += body.acc * self.timestep
             x, y, z = body.vel
 
             if not x==0:
                 if not self.moveBody(body, (x, 0, 0)):
                     if abs(body.vel.x) > .2:
-                        body.acc.x = 0
+                        body.acc.x = 0.0
                         body.vel.x = -body.vel.x * .2
                     else:
-                        body.acc.x = 0
-                        body.vel.x = 0
-                        #self.sleeping.append(body)
+                        body.acc.x = 0.0
+                        body.vel.x = 0.0
 
             if not y==0:
                 if not self.moveBody(body, (0, y, 0)):
                     if abs(body.vel.y) > .2:
-                        body.acc.y = 0
+                        body.acc.y = 0.0
                         body.vel.y = -body.vel.y * .2
                     else:
-                        body.acc.y = 0
-                        body.vel.y = 0
-                        #self.sleeping.append(body)
+                        body.acc.y = 0.0
+                        body.vel.y = 0.0
 
             if z < 0:
                 if not self.moveBody(body, (0, 0, z)):
                     if abs(body.vel.z) > .2:
-                        body.acc.z = 0
+                        body.acc.z = 0.0
                         body.vel.z = -body.vel.z * .2
                     else:
-                        body.acc.z = 0
-                        body.vel.z = 0
-                        #self.sleeping.append(body)
+                        body.acc.z = 0.0
+                        body.vel.z = 0.0
  
             elif z > 0:
                 self.moveBody(body, (0, 0, z))
@@ -145,6 +123,11 @@ class AdventureMixin(object):
             if body.bbox.z == 0:
                 body.vel.x = body.vel.x * self.ground_friction
                 body.vel.y = body.vel.y * self.ground_friction
+
+            if (round(body.vel.x, 6) ==
+                round(body.vel.y, 6) ==
+                round(body.vel.z, 6) == 0.0) and body.bbox.z == 0:
+                self.sleeping.append(body)
 
 
 class PhysicsGroup(context.Context):
@@ -193,7 +176,6 @@ class PhysicsGroup(context.Context):
         self.geometry = quadtree.FastQuadTree(rects)
 
         self.setTimestep(timestep)
-        #self.precompute(-10.0, 10.0, 1/(10.0**self.precision))
 
 
     def __iter__(self):
@@ -218,8 +200,7 @@ class PhysicsGroup(context.Context):
     def setTimestep(self, time):
         self.timestep = time
         self.gravity_delta = self.gravity * time
-        self.ground_friction = pow(.001, self.timestep)
-        #self.gravity_delta.y = round(self.gravity_delta.y, self.precision)
+        self.ground_friction = pow(.0001, self.timestep)
 
 
     def moveBody(self, body, (x, y, z), clip=True):
